@@ -1,0 +1,63 @@
+# PCGB toy study — lab notebook
+
+## Summary (to be filled when stopped; ≤10 lines answering Q1–4)
+
+_TBD_
+
+## Setup decisions (frozen)
+
+**Hardware profile: CPU.** 4× Intel Xeon @ 2.1 GHz (1 thread/core), 15 GB RAM, no CUDA, no MPS.
+torch from PyPI (download.pytorch.org is blocked by the sandbox proxy), venv at `/home/user/pcgb-venv`.
+
+- Every run: `torch.set_num_threads(1)`; **3 runs execute concurrently** (one per core, 4th core left for
+  coordination). This holds for the whole study so wall-clock budgets are comparable across arms.
+- Budget: **12 min wall clock per run** for training + PCGB scoring + intermediate evals. The final
+  val/test eval is outside the budget and identical for every arm. No early stopping / checkpoint picking:
+  the final weights are evaluated.
+- Primary dataset KS1D (128 pts). Kolmo2D and GrayScott2D at 32×32. Control: denoise (MNIST, or a fallback
+  if the sandbox blocks the download — see below).
+- Model: same 4-skip ConvNeXt U-Net, ~200–500k params.
+- n_train grid {128, 512, 2048}. Phase 1: 5 arms × {KS1D, Kolmo2D} × n ∈ {512, 2048} (2048 = CPU stand-in for 8192) × 3 seeds.
+- PCGB scoring subset ≤ 256 samples.
+- Phase 2 loop: KS1D, n=512, 3 seeds.
+- Branch: the session is pinned to `ccr-3b23dd38-45kn1a` (not `autoresearch/pcgb-<tag>`); all work lives in
+  `experiments/pcgb_toy/` so it does not touch the Samudra package.
+
+## Interface contract between prepare.py and train.py
+
+`prepare.py` (frozen after setup):
+- `DATASETS = ["ks1d", "kolmo2d", "grayscott2d", "denoise"]`
+- `python prepare.py --dataset <name>|--all` generates and caches to `data/<name>.pt`.
+- `load(name) -> dict` with normalized float32 tensors (per-channel mean/std from the train split):
+  `train`, `val`, `test`, `calib`, each shaped `[N_traj, T, C, *spatial]` (denoise: the T axis holds
+  (noisy, clean) i.e. T=2), plus `meta = {periodic: bool, ndim: 1|2, channels: int, spatial: tuple,
+  rollout_steps: int (10, or 1 for denoise), mean, std}`.
+- `get_train_pairs(name, n_train, seed) -> (X, Y)`: a fixed subset of n_train (x_t, x_{t+1}) pairs drawn from
+  the train trajectories, deterministic in (n_train, seed). Shapes `[n, C, *spatial]`.
+- `get_calib_pairs(name, n=256, seed=0) -> (X, Y)` from the calibration split.
+- `evaluate(model_fn, name, split="val") -> {"metric": float, "onestep_mse": float, "per_step_nrmse": list}`.
+  `model_fn` maps a normalized `[B, C, *spatial]` tensor to the next normalized state. Physics: autoregressive
+  10-step rollout from a fixed set of ICs; metric = per-step nRMSE (RMSE / per-channel std of the target in
+  physical units, so =RMSE in normalized units), averaged over the 10 steps and channels. Denoise: metric =
+  one-step nRMSE. Rollouts that go non-finite count as metric = inf (flagged).
+- Splits by trajectory: train / val / test / calib are disjoint sets of trajectories (or images).
+
+`train.py`:
+- `python train.py --dataset ks1d --arm {baseline,stochdepth,mask_only,reweight_only,pcgb} --n_train 512
+  --seed 0 [--budget_s 720] [--tag ...]` ; writes `runs/<tag>/log.jsonl` + appends a row to `results.tsv`.
+
+## Phase 0 — premise checks
+
+_TBD_
+
+## Phase 1 — main table
+
+_TBD_
+
+## Phase 2 — loop log
+
+_TBD_
+
+## Open questions
+
+_TBD_
