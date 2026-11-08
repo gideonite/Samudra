@@ -185,3 +185,6 @@ a23fe91	grayscott2d	pcgb	512	2	0.696753	0.0456397	720.2	rounds=29 steps=2628 ste
 1ee8387	kolmo2d	pcgb	512	0	1.14007	0.150573	720.2	rounds=29 steps=2709 steps_per_s=3.8 params=262851 minH=1.000 ens_metric=1.1505;ens_masks=3/7/5 drop_mode=rescale warm_frac=0.5 ensemble_topk=3
 1ee8387	kolmo2d	pcgb	512	1	1.0948	0.120702	720.2	rounds=29 steps=2655 steps_per_s=3.7 params=262851 minH=1.000 ens_metric=1.117;ens_masks=7/5/11 drop_mode=rescale warm_frac=0.5 ensemble_topk=3
 1ee8387	kolmo2d	pcgb	512	2	1.04955	0.218013	720.0	rounds=29 steps=2693 steps_per_s=3.7 params=262851 MASK_COLLAPSE(m=0,23/29) minH=1.000 ens_metric=1.0704;ens_masks=3/1/7 drop_mode=rescale warm_frac=0.5 ensemble_topk=3
+c43f057	ks1d	stochdepth	512	0	0.478133	0.00201437	7200.0	rounds=29 steps=157359 steps_per_s=21.9 params=234571
+c43f057	ks1d	baseline	512	0	0.0614955	6.06838e-05	7200.0	rounds=29 steps=151790 steps_per_s=21.1 params=234571
+c43f057	ks1d	pcgb	512	0	0.331235	0.00325249	7200.0	rounds=299 steps=151850 steps_per_s=21.1 params=234571 minH=1.000 n_rounds=300
