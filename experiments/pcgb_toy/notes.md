@@ -67,10 +67,27 @@ Denoise = real MNIST (download worked), σ=0.2. Persistence val metric: ks1d 1.1
      The deployed net is evaluated at whatever phase the budget ends in. Not "collapse" by the 70% rule (mask 0
      ~45%), but the adversarial rule is degenerate: the worst mask is nearly always "drop everything".
 
-## Phase 0 — premise checks
+## Phase 0 — premise checks (phase0_analysis.py; figs/phase0_*.png; n=512 seed-0 baselines)
 
-_Running: baseline grid ks1d/kolmo2d × n{128,512,2048} × 3 seeds + denoise baseline (jobs/phase0_baselines.txt);
-lesion + gradient analysis delegated._
+Val metric: KS1D 0.061 (still improving), Kolmo2D 0.73 (best 0.64 @1k steps, then overfits), Denoise 0.217
+(best 0.18 @~500 steps, then overfits).
+
+- **Lesions (rel. to unmasked)**: KS1D is a *cliff*: any single skip drop ×7.6–35, any single block ×3.3–21,
+  remove-k curve flat at ~×16–18 from k=1 (no Veit-style graceful degradation). Kolmo2D/Denoise: mild; the
+  bottleneck blocks (d3, mid, u5) and in Denoise skips 2–3 are free to drop (×0.94–1.0); damage sits in the
+  high-res blocks (d0, u7, u8, final) and skip 0.
+- **Gradient**: concentrated at the high-res ends (KS1D: d0+d1 ≈55% of grad energy; Kolmo/Denoise: u8+final
+  70–80%). The three deepest blocks get ≤0.5% (KS1D) / 0.1–1% (2D); deepest skip 1–8% of skip grad energy.
+  Stable over training.
+- **Path length**: the function is carried by long, near-full-depth paths; masked-net loss only beats
+  persistence with ≥9 of 14 units kept (KS1D). Not the "ensemble of short paths" picture.
+- **PCGB v1 reweighting is inert by construction here**: L̄ measured 0.67 (KS1D), 0.75 (Kolmo2D), 0.82 (PCGB net);
+  per-sample residuals are near-homogeneous (max/median r ≈ 1.2–1.5) → β = 1 → D' = D every round.
+- **Conclusion**: Premise partly true for gradient *distribution* (deep paths get almost no gradient) but false
+  for the *ensemble* claim: the baseline is a co-adapted long-path function, not a sum of redundant paths. In the
+  2D/denoise sets the deep paths are simply unused (free to remove) and the binding problem is overfitting at
+  n=512, not gradient starvation. Little room for PCGB as specified; Phase 1 run anyway (as v1, reweight no-op
+  included — that is part of the answer).
 
 ## Phase 1 — main table
 
