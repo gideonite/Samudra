@@ -117,3 +117,30 @@ c084f4f	ks1d	pcgb	512	2	0.39289	0.00182177	720.0	rounds=29 steps=11121 steps_per
 76630c1	ks1d	reweight_only	512	0	0.0580926	5.92143e-05	720.1	rounds=29 steps=11294 steps_per_s=15.7 params=234571 minH=0.996 ens_metric=0.58047;ens_masks=7/13/5 rw_norm=p95 beta_cap=inf ensemble_topk=3
 76630c1	ks1d	reweight_only	512	1	0.0537354	6.17911e-05	720.0	rounds=29 steps=11348 steps_per_s=15.8 params=234571 minH=0.996 ens_metric=0.56689;ens_masks=7/13/14 rw_norm=p95 beta_cap=inf ensemble_topk=3
 76630c1	ks1d	reweight_only	512	2	0.0612222	7.09107e-05	720.0	rounds=29 steps=11225 steps_per_s=15.6 params=234571 minH=0.996 ens_metric=0.4956;ens_masks=7/13/14 rw_norm=p95 beta_cap=inf ensemble_topk=3
+bfe5f15	ks1d	pcgb	512	3	0.646982	0.00265696	720.1	rounds=29 steps=11013 steps_per_s=15.3 params=234571 minH=1.000 ens_metric=0.29262;ens_masks=12/14/6 warm_frac=0.5 ensemble_topk=3
+bfe5f15	ks1d	pcgb	512	3	0.520489	0.00424928	720.0	rounds=29 steps=10978 steps_per_s=15.2 params=234571 minH=1.000 ens_metric=0.41701;ens_masks=4/14/12 drop_mode=rescale warm_frac=0.5 ensemble_topk=3
+bfe5f15	ks1d	pcgb	512	4	0.527343	0.00382791	720.0	rounds=29 steps=11111 steps_per_s=15.4 params=234571 minH=1.000 ens_metric=0.32237;ens_masks=14/12/6 warm_frac=0.5 ensemble_topk=3
+e7d403f	ks1d	pcgb	512	4	0.467159	0.00421029	720.0	rounds=29 steps=11137 steps_per_s=15.5 params=234571 minH=1.000 ens_metric=0.50185;ens_masks=12/14/10 drop_mode=rescale warm_frac=0.5 ensemble_topk=3
+e7d403f	ks1d	pcgb	512	5	0.372632	0.00231644	720.0	rounds=29 steps=11189 steps_per_s=15.5 params=234571 minH=1.000 ens_metric=0.2429;ens_masks=13/5/12 warm_frac=0.5 ensemble_topk=3
+e7d403f	ks1d	pcgb	512	5	0.334415	0.00314907	720.0	rounds=29 steps=11251 steps_per_s=15.6 params=234571 minH=1.000 ens_metric=0.42358;ens_masks=4/12/6 drop_mode=rescale warm_frac=0.5 ensemble_topk=3
+e7d403f	ks1d	stochdepth	128	0	0.313678	0.00324116	720.0	rounds=29 steps=11525 steps_per_s=16.0 params=234571
+e7d403f	ks1d	pcgb	128	0	0.625458	0.0105447	720.0	rounds=29 steps=11107 steps_per_s=15.4 params=234571 minH=1.000
+e7d403f	ks1d	pcgb	128	0	0.507403	0.00642039	720.0	rounds=29 steps=11003 steps_per_s=15.3 params=234571 minH=1.000 ens_metric=0.47593;ens_masks=14/7/13 warm_frac=0.5 ensemble_topk=3
+e7d403f	ks1d	stochdepth	128	1	0.327399	0.0037552	720.1	rounds=29 steps=11570 steps_per_s=16.1 params=234571
+e7d403f	ks1d	pcgb	128	1	0.57986	0.00916159	720.0	rounds=29 steps=10887 steps_per_s=15.1 params=234571 minH=1.000
+e7d403f	ks1d	pcgb	128	1	0.554122	0.00838542	720.1	rounds=29 steps=10918 steps_per_s=15.2 params=234571 minH=1.000 ens_metric=0.48931;ens_masks=14/6/12 warm_frac=0.5 ensemble_topk=3
+e7d403f	ks1d	stochdepth	128	2	0.290699	0.00271895	720.1	rounds=29 steps=11825 steps_per_s=16.4 params=234571
+e7d403f	ks1d	pcgb	128	2	0.515632	0.0106729	720.0	rounds=29 steps=11373 steps_per_s=15.8 params=234571 minH=1.000
+e7d403f	ks1d	pcgb	128	2	0.498947	0.00633474	720.0	rounds=29 steps=11207 steps_per_s=15.6 params=234571 minH=1.000 ens_metric=0.47299;ens_masks=14/7/13 warm_frac=0.5 ensemble_topk=3
+e7d403f	kolmo2d	stochdepth	128	0	0.675431	0.0647843	720.2	rounds=29 steps=3049 steps_per_s=4.2 params=262851
+e7d403f	kolmo2d	pcgb	128	0	1.07705	0.201196	720.0	rounds=29 steps=2709 steps_per_s=3.8 params=262851 minH=1.000
+e7d403f	kolmo2d	pcgb	128	0	1.07042	0.180932	720.1	rounds=29 steps=2691 steps_per_s=3.7 params=262851 minH=1.000 ens_metric=1.0701;ens_masks=7/11/3 warm_frac=0.5 ensemble_topk=3
+e7d403f	kolmo2d	stochdepth	128	1	0.720204	0.0712632	720.1	rounds=29 steps=3170 steps_per_s=4.4 params=262851
+e7d403f	kolmo2d	pcgb	128	1	1.1408	0.234585	720.0	rounds=29 steps=2769 steps_per_s=3.8 params=262851 minH=1.000
+e7d403f	kolmo2d	pcgb	128	1	0.971724	0.153459	720.2	rounds=29 steps=2752 steps_per_s=3.8 params=262851 minH=1.000 ens_metric=0.9795;ens_masks=7/11/3 warm_frac=0.5 ensemble_topk=3
+e7d403f	kolmo2d	stochdepth	128	2	0.679192	0.0635237	720.2	rounds=29 steps=3022 steps_per_s=4.2 params=262851
+e7d403f	kolmo2d	pcgb	128	2	1.0691	0.21252	720.1	rounds=29 steps=2668 steps_per_s=3.7 params=262851 minH=1.000
+e7d403f	kolmo2d	pcgb	128	2	1.02951	0.137763	720.1	rounds=29 steps=2633 steps_per_s=3.7 params=262851 minH=1.000 ens_metric=1.0253;ens_masks=7/11/3 warm_frac=0.5 ensemble_topk=3
+e7d403f	denoise	stochdepth	512	0	0.190381	0.036245	720.1	rounds=29 steps=3537 steps_per_s=4.9 params=262851
+e7d403f	denoise	pcgb	512	0	0.384123	0.14755	720.1	rounds=29 steps=3166 steps_per_s=4.4 params=262851 minH=1.000
+e7d403f	denoise	reweight_only	512	0	0.215724	0.0465367	720.0	rounds=29 steps=3515 steps_per_s=4.9 params=262851 minH=1.000
