@@ -46,9 +46,31 @@ torch from PyPI (download.pytorch.org is blocked by the sandbox proxy), venv at 
 - `python train.py --dataset ks1d --arm {baseline,stochdepth,mask_only,reweight_only,pcgb} --n_train 512
   --seed 0 [--budget_s 720] [--tag ...]` ; writes `runs/<tag>/log.jsonl` + appends a row to `results.tsv`.
 
+## Data (prepare.py frozen at a8895b9)
+
+KS1D L=22π N=128 ETDRK4, Δt_model=2.0 (lag-1 corr 0.88). Kolmo2D: ν=1/1500, drag 0.1, k_f=4, 64² sim → 32²,
+Δt_model=0.15 (lag-1 0.87), Re≈1000 (estimate). GrayScott F=0.04 k=0.06 (stripes/spots), lag-1 0.98.
+Denoise = real MNIST (download worked), σ=0.2. Persistence val metric: ks1d 1.14, kolmo2d 1.03, gs 0.79, denoise 0.65.
+
+## Calibration (commit a8895b9, n=512, seed 0, 3 concurrent 1-thread jobs)
+
+- **KS1D baseline**: metric 0.061, 11.7k steps (16 steps/s). Val curve 0.19→0.072→0.065→0.069→0.061: left the
+  transient, still creeping down. Budget OK, model size kept.
+- **Kolmo2D baseline**: metric 0.73, only 3.0k steps (4.2 steps/s). Val metric is best early (0.64 @1k steps) and
+  rises while train loss keeps falling → **overfits at n=512** (val one-step MSE also rises). Not undertrained in the
+  "shrink the model" sense; kept as is. Note this regime is overfitting-limited → regularisers have room here.
+- **KS1D pcgb (v1 defaults)**: metric **0.69 vs 0.061** baseline — >10× worse. Two pathologies:
+  1. **Reweighting is a no-op**: entropy = 1.000 and max/min ratio = 1.00 in every round, i.e. β = 1 always
+     (L̄ = mean r/max r ≥ 0.5: per-sample residuals are too uniform). Lbar/beta now logged (f5d18a7) to confirm.
+  2. **Mask oscillation**: argmax picks mask 0 (all skips dropped) → after a round on mask 0 the unmasked net
+     (15) becomes the worst → picks 15/14 → back to 0 … Evals swing with it (0.14, 1.14, 0.16, 0.90, 0.31).
+     The deployed net is evaluated at whatever phase the budget ends in. Not "collapse" by the 70% rule (mask 0
+     ~45%), but the adversarial rule is degenerate: the worst mask is nearly always "drop everything".
+
 ## Phase 0 — premise checks
 
-_TBD_
+_Running: baseline grid ks1d/kolmo2d × n{128,512,2048} × 3 seeds + denoise baseline (jobs/phase0_baselines.txt);
+lesion + gradient analysis delegated._
 
 ## Phase 1 — main table
 
