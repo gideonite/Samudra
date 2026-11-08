@@ -159,7 +159,7 @@ def gen_kolmo2d(n_traj, seed, n_snap=N_SNAP, p=KOLMO):
 
 
 # ----------------------------------------------------------------------------- Gray-Scott
-GS = dict(F=0.04, k=0.06, Du=0.16, Dv=0.08, dt=1.0, burn=6000, snap=200, n=32)
+GS = dict(F=0.04, k=0.06, Du=0.16, Dv=0.08, dt=1.0, burn=2000, snap=1000, n=32)
 
 
 def gen_grayscott2d(n_traj, seed, n_snap=N_SNAP, p=GS):
