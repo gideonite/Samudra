@@ -15,7 +15,7 @@ Conventions
 - Weights (--weight_mode): sample = D[i] per training sample (v1); pixel = W over (C, *spatial) positions.
   --rw_on heldout: D lives on the calibration pairs and only weights the mask score S; the training loss is unweighted.
 """
-import argparse, fcntl, json, math, os, random, subprocess, sys, time
+import argparse, fcntl, hashlib, json, math, os, random, subprocess, sys, time
 from pathlib import Path
 
 import numpy as np
@@ -339,7 +339,11 @@ def main(args):
     random.seed(args.seed); np.random.seed(args.seed); torch.manual_seed(args.seed)
     commit = git_commit()
     name, arm = args.dataset, args.arm
-    tag = args.tag or f"{name}_{arm}_n{args.n_train}_s{args.seed}_{commit}"
+    nondef = sorted(f"{k}={v}" for k, v in vars(args).items()
+                    if k not in ("dataset", "arm", "n_train", "seed", "tag", "out_dir", "eval_test")
+                    and v != get_args(["--dataset", name, "--arm", arm]).__dict__[k])
+    fh = hashlib.md5(" ".join(nondef).encode()).hexdigest()[:6] if nondef else "v1"
+    tag = args.tag or f"{name}_{arm}_n{args.n_train}_s{args.seed}_{commit}_{fh}"  # fh = hash of non-default flags
     out = Path(args.out_dir); run_dir = out / "runs" / tag; run_dir.mkdir(parents=True, exist_ok=True)
     log = Log(run_dir / "log.jsonl")
     meta = prepare.load(name)["meta"]

@@ -131,3 +131,27 @@ _TBD_
 ## Open questions
 
 _TBD_
+
+## Phase 2 — loop log (ks1d, n=512, 3 seeds; val metric mean ± std)
+
+### Screen 1 (vs incumbent pcgb v1 = 0.619 ± 0.065; keep needs Δ > 0.13). All runs also did `--ensemble_topk 3`.
+
+| change | metric | ens(top-3 masked) | verdict |
+|---|---|---|---|
+| mask_rule=random | 0.980 ± 0.095 | 0.38 | revert — random masks are worse than adversarial |
+| mask_rule=argmin | 0.059 ± 0.004 | 0.55 | **degenerate**: collapses to mask 15 (all-keep) 29/29 rounds = baseline. Reject |
+| mask_exclude_all_drop | 0.567 ± 0.182 | 0.33 | revert (noise) |
+| drop_mode=rescale | 0.528 ± 0.062 | 0.34 | revert (Δ 0.09 < 0.13) |
+| rw_sq (reweighting becomes live) | 0.518 ± 0.050 | 0.37 | revert (Δ 0.10) |
+| mask_target=blocks | 0.486 ± 0.232 | 0.66 | revert (huge variance) |
+| **warm_frac=0.5** | **0.478 ± 0.016** | 0.32 | **keep** (Δ 0.141 > 0.13) |
+| mask_rule=softmax | 0.531 ± 0.221 | 0.32 | revert |
+
+- Every masking variant stays 6–16× worse than baseline (0.060). The closer a variant gets to "no masking"
+  (argmin → all-keep; warm-up → fewer masked rounds), the better it does → masking itself is the harm.
+- **Ensemble test**: for mask-trained nets the top-3 masked-subnet ensemble beats the unmasked net (e.g. 0.98→0.38,
+  0.48→0.32): masked training does create usable sub-networks. For the baseline-like net (argmin) the ensemble is
+  ~10× worse than the unmasked net. So the "ensemble" view only has teeth for nets trained to be ensembles, and
+  those nets are still far worse than plain training. The deployed unmasked net is the wrong readout for PCGB.
+- Bug found: run tags omitted flags, so screen-1 run dirs overwrote each other (results.tsv rows are intact; only
+  per-round logs lost). Fixed: tag now ends with a hash of non-default flags.
