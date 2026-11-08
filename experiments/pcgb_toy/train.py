@@ -50,12 +50,12 @@ class Block(nn.Module):
 
 
 class UNet(nn.Module):
-    def __init__(self, meta, width=20, drop_mode="zero"):
+    def __init__(self, meta, width=10, drop_mode="zero"):
         super().__init__()
         nd, cin, per = meta["ndim"], meta["channels"], meta["periodic"]
         k = 7 if nd == 1 else 5
         conv = (nn.Conv1d, nn.Conv2d)[nd - 1]
-        ch = [width, 2 * width, 3 * width, 4 * width, 4 * width]
+        ch = [width * m for m in (1, 2, 4, 8, 8)]
         self.drop = DROP_FNS[drop_mode]
         self.stem = conv(cin, ch[0], 3, padding=1, padding_mode="circular" if per else "zeros")
         self.blocks = nn.ModuleList([Block(c, nd, k, per) for c in ch[:4] + [ch[4]] + ch[3::-1] + [ch[0]]])
@@ -72,12 +72,13 @@ class UNet(nn.Module):
     def _scales(m, n):
         return [1.0] * n if m is None else [float(v) for v in m]
 
-    def forward(self, x, skip_mask=None, block_mask=None):
-        sm, bm = self._scales(skip_mask, N_SKIPS), self._scales(block_mask, N_BLOCKS)
+    def encode(self, x, bm):
         h, skips = self.stem(x), []
         for i in range(4):
             h = self.blocks[i](h, bm[i]); skips.append(h); h = self.downs[i](h)
-        h = self.blocks[4](h, bm[4])
+        return self.blocks[4](h, bm[4]), skips
+
+    def decode(self, x, h, skips, sm, bm):
         for j in range(4):
             i = 3 - j
             s = skips[i] if sm[i] == 1.0 else self.drop(skips[i], sm[i])
@@ -86,6 +87,12 @@ class UNet(nn.Module):
             h = self.projs[j](torch.cat([F.interpolate(h, scale_factor=2, mode=self.mode), s], 1))
             h = self.blocks[5 + j](h, bm[5 + j])
         return x + self.head(self.blocks[9](h, bm[9]))  # residual prediction
+
+    def forward(self, x, skip_mask=None, block_mask=None, enc=None):
+        """enc = cached self.encode(x, bm) output (valid while block_mask/encoder blocks are unchanged)."""
+        sm, bm = self._scales(skip_mask, N_SKIPS), self._scales(block_mask, N_BLOCKS)
+        h, skips = enc if enc is not None else self.encode(x, bm)
+        return self.decode(x, h, skips, sm, bm)
 
 
 def mask_bools(m):
@@ -126,15 +133,17 @@ def score_round(model, args, X, Y, D, rnd, calib):
     idx = torch.arange(rnd % stride, n, stride)[: args.score_n]
     x, y = X[idx], Y[idx]
     model.eval()
-    err = lambda xx, yy, m: ((model(xx, skip_mask=mask_bools(m)) - yy) ** 2).flatten(1).mean(1)
-    e_full = err(x, y, 15)
+    def err(xx, yy, m, enc=None): return ((model(xx, skip_mask=mask_bools(m), enc=enc) - yy) ** 2).flatten(1).mean(1)
+    enc = model.encode(x, [1.0] * N_BLOCKS)  # encoder is mask-independent: compute once for all 16 masks
+    e_full = err(x, y, 15, enc)
     S = None
     if args.arm in ("mask_only", "pcgb"):
         if args.score_on == "train":
-            S = torch.stack([(D[idx] * (e_full if m == 15 else err(x, y, m))).mean() for m in range(16)])
+            S = torch.stack([(D[idx] * (e_full if m == 15 else err(x, y, m, enc))).mean() for m in range(16)])
         else:
-            xc, yc = calib
-            S = torch.stack([err(xc, yc, m).mean() for m in range(16)])
+            xc, yc = calib[0][: args.score_n], calib[1][: args.score_n]
+            encc = model.encode(xc, [1.0] * N_BLOCKS)
+            S = torch.stack([err(xc, yc, m, encc).mean() for m in range(16)])
     model.train()
     return idx, e_full.sqrt(), S
 
@@ -198,7 +207,7 @@ def append_row(path, row):
         fcntl.flock(f, fcntl.LOCK_UN)
 
 
-def build_model(meta, width=20, drop_mode="zero"):
+def build_model(meta, width=10, drop_mode="zero"):
     return UNet(meta, width, drop_mode)
 
 
@@ -212,9 +221,9 @@ def get_args(argv=None):
     p.add_argument("--eval_test", action="store_true"); p.add_argument("--n_evals", type=int, default=6)
     p.add_argument("--lr", type=float, default=1e-3); p.add_argument("--wd", type=float, default=1e-4)
     p.add_argument("--clip", type=float, default=1.0); p.add_argument("--bs", type=int, default=32)
-    p.add_argument("--width", type=int, default=20); p.add_argument("--drop_mode", default="zero", choices=list(DROP_FNS))
+    p.add_argument("--width", type=int, default=10); p.add_argument("--drop_mode", default="zero", choices=list(DROP_FNS))
     p.add_argument("--n_rounds", type=int, default=30)
-    p.add_argument("--score_n", type=int, default=256); p.add_argument("--score_on", choices=["train", "calib"], default="train")
+    p.add_argument("--score_n", type=int, default=128); p.add_argument("--score_on", choices=["train", "calib"], default="train")
     p.add_argument("--lam", type=float, default=0.3); p.add_argument("--clamp_ratio", type=float, default=5.0)
     p.add_argument("--mask_rule", default="argmax", choices=["argmax", "argmin", "softmax", "random", "roundrobin"])
     p.add_argument("--mask_temp", type=float, default=1.0)
@@ -297,7 +306,7 @@ def main(args):
         model.track_grads = False
         if args.clip > 0: nn.utils.clip_grad_norm_(model.parameters(), args.clip)
         opt.step()
-        step += 1; r_steps += 1; r_loss += float(loss)
+        step += 1; r_steps += 1; r_loss += loss.item()
     wall = time.perf_counter() - t0
 
     # ---- final evals (outside budget; unmasked final weights)
@@ -318,7 +327,7 @@ def main(args):
     if not math.isfinite(fin["metric"]): notes.append("NONFINITE_ROLLOUT")
     if test: notes.append(f"test_metric={test['metric']:.5g};test_onestep={test['onestep_mse']:.5g}")
     extra = [f"{k}={getattr(args, k)}" for k, d in (("mask_rule", "argmax"), ("score_on", "train"), ("lam", 0.3), ("clamp_ratio", 5.0),
-             ("drop_mode", "zero"), ("lr", 1e-3), ("width", 20), ("reset_adam", False)) if getattr(args, k) != d]
+             ("drop_mode", "zero"), ("lr", 1e-3), ("width", 10), ("reset_adam", False)) if getattr(args, k) != d]
     append_row(out / "results.tsv", [commit, name, arm, args.n_train, args.seed, f"{fin['metric']:.6g}", f"{fin['onestep_mse']:.6g}",
                                     f"{wall:.1f}", " ".join(notes + extra)])
     print(f"{tag}: metric={fin['metric']:.5g} onestep={fin['onestep_mse']:.5g} steps={step} rounds={rnd} {' '.join(notes)}")
