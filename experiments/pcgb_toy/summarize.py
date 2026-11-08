@@ -5,6 +5,7 @@ g = collections.defaultdict(list)
 for r in rows:
     flags = ' '.join(t for t in r['notes'].split() if '=' in t and t.split('=')[0] not in
                      ('rounds', 'steps', 'steps_per_s', 'params', 'minH', 'test_metric', 'test_onestep', 'ens_metric', 'ens_masks'))
+    if float(r['wallclock_s']) > 3600: flags = 'BUDGET=%ds ' % round(float(r['wallclock_s']), -2) + flags
     g[(r['dataset'], r['n_train'], r['arm'], flags)].append((float(r['metric']), r['notes']))
 for k, v in sorted(g.items()):
     m = [x for x, _ in v]
