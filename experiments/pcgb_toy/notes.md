@@ -1,23 +1,14 @@
 # PCGB toy study — lab notebook
 
-## Summary (Q1–4; CPU profile, 12-min wall-clock runs, 3 seeds; full table in final_table.md)
+## Summary (Q1–4; CPU profile, 12-min wall-clock runs, 3 seeds; test table below, details in sections further down)
 
-1. **Premise: half true.** Deep paths do get little gradient: the three bottleneck blocks hold ≤0.5–1% of gradient
-   energy. But the baseline is not an ensemble of paths. On KS1D, removing any single skip or block costs ×3–35,
-   and loss beats persistence only with ≥9 of 14 units kept. On Kolmo2D and denoise the deep paths are simply unused.
-2. **No.** PCGB v1 is ×10 worse than plain training on KS1D (test 0.615 vs 0.068 at n=512) and ×1.2–2 worse on
-   Kolmo2D, denoise and Gray–Scott. Random stochastic depth beats it everywhere and beats baseline on the
-   overfitting-limited sets (Kolmo2D n=512: 0.541 vs 0.760). No PCGB variant in ~20 Phase-2 experiments came within
-   ×6 of baseline on KS1D n=512. The best variant (50% plain warm-up) was a marginal keep that does not survive 6 seeds.
-3. **Neither half helps.** Adversarial skip masking does all the damage: it oscillates between "drop all skips" and
-   "keep all", and it gets worse with more data. AdaBoost.R2 reweighting is a no-op as specified (L̄≈0.67–0.82 > 0.5
-   → β=1). When forced live (squared, p95, no cap, per-pixel), it is neutral: reweight_only ≡ baseline everywhere.
-4. **Nothing physics- or small-n-specific.** PCGB's deficit shrinks as n falls (KS1D ×10 → ×2.8 at n=128). The one
-   PCGB "win" (Kolmo2D n=128, −0.12) is dominated by stochastic depth (−0.45). It behaves as a weak, poorly
-   tuned regulariser. Denoise (non-physics) shows the same pattern.
-   **Best config: plain baseline** for the co-adapted chaotic 1D system, **random stochastic depth** where data
-   limits (Kolmo2D, denoise). Readout caveat: for mask-trained nets the top-3 masked-subnet ensemble beats their
-   own unmasked net (e.g. 0.48→0.32), but it stays far worse than baseline.
+1. **Premise half true**: deep blocks get ≤1% of gradient, but the baseline is a co-adapted long-path function, not a path ensemble (KS1D: any single skip/block lesion ×3–35); on Kolmo2D/denoise the deep paths are just unused.
+2. **PCGB loses at matched compute**: ×9 worse than baseline on KS1D (test 0.615 vs 0.068, n=512), ×1.1–2 worse on Kolmo2D/denoise/Gray–Scott; random stochastic depth beats it everywhere.
+3. **Neither half helps**: adversarial skip masking does all the damage (oscillates "drop all" ↔ "keep all", worse with more data); AdaBoost.R2 reweighting is a no-op as specified (L̄ 0.67–0.82 → β=1) and neutral when forced live (reweight_only ≡ baseline).
+4. **No physics/small-n specificity**: PCGB's deficit shrinks as n falls (KS1D ×9 → ×2.4 at n=128) but never flips; its one win (Kolmo2D n=128, −0.12) is dwarfed by stochdepth (−0.45); denoise behaves the same.
+5. ~25 Phase-2 variants (mask rules, drop modes, block masks, warm-up, live/pixel reweighting, round length, Adam reset) never came within ×6 of baseline on KS1D or beat baseline on Kolmo2D n=512.
+6. Mask-trained nets *are* more ensemble-like (top-3 masked-subnet average beats their own unmasked net, e.g. 0.48→0.32), but remain far worse than plain training.
+7. **Best config**: plain baseline for the co-adapted chaotic 1D system; random stochastic depth (skip p=0.2, block p≤0.1) where data limits (Kolmo2D, denoise, Gray–Scott). It also extends Kolmo2D's predictability horizon (15–17 vs 8–13 steps).
 
 ### Main table — TEST split (10-step rollout nRMSE; denoise 1-step), mean ± std over 3 seeds
 
@@ -239,3 +230,17 @@ Decorrelation horizon = first step with nRMSE > 1 (mean over seeds):
   overfits catastrophically, and dominated by random stochastic depth there.
 - **Physics vs non-physics**: no physics-specific benefit. On denoise PCGB is ×2 worse (stochdepth −11%); on
   non-chaotic grayscott all arms are within noise except pcgb v1 (+9%).
+
+### Screen 4 — Kolmo2D n=512 probe (can any PCGB variant approach stochdepth where regularisation matters?)
+
+| config (pcgb + warm0.5 + …) | val | vs baseline 0.741 / stochdepth 0.530 |
+|---|---|---|
+| (nothing) | 1.143 ± 0.122 | worse — warm-up *hurts* here (masked rounds pushed into low-LR half) |
+| mask_rule=random | 0.810 ± 0.046 | best PCGB variant, still worse than baseline |
+| mask_target=blocks | 0.887 ± 0.074 | worse |
+| mask_rule=softmax | 1.050 ± 0.100 | worse |
+| drop_mode=rescale | 1.095 ± 0.050 (3 seeds; one MASK_COLLAPSE on mask 0) | worse |
+
+→ No PCGB variant beats baseline on Kolmo2D n=512; per-step stochastic depth remains far ahead. Round-level masking
+(even random) is a much worse regulariser than per-step random dropping. **Loop stopped here**: the questions are
+answered cleanly, and further PCGB tuning has shown no trend toward baseline.

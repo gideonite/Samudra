@@ -170,3 +170,18 @@ a23fe91	grayscott2d	stochdepth	512	2	0.629929	0.0350139	720.0	rounds=29 steps=30
 a23fe91	grayscott2d	pcgb	512	2	0.73963	0.0465618	720.1	rounds=29 steps=2673 steps_per_s=3.7 params=262952 minH=0.999
 a23fe91	grayscott2d	reweight_only	512	2	0.66428	0.0348025	720.2	rounds=29 steps=2927 steps_per_s=4.1 params=262952 minH=0.998
 a23fe91	grayscott2d	pcgb	512	2	0.696753	0.0456397	720.2	rounds=29 steps=2628 steps_per_s=3.6 params=262952 minH=0.998 ens_metric=0.68468;ens_masks=6/14/7 warm_frac=0.5 ensemble_topk=3
+83413c5	kolmo2d	pcgb	512	2	1.01263	0.0905693	720.1	rounds=29 steps=2612 steps_per_s=3.6 params=262851 minH=1.000 ens_metric=0.99651;ens_masks=7/11/3 warm_frac=0.5 ensemble_topk=3
+83413c5	kolmo2d	pcgb	512	1	1.16241	0.120331	720.1	rounds=29 steps=2570 steps_per_s=3.6 params=262851 minH=1.000 ens_metric=1.1232;ens_masks=7/13/11 warm_frac=0.5 ensemble_topk=3
+83413c5	kolmo2d	pcgb	512	0	1.25322	0.14761	720.0	rounds=29 steps=2584 steps_per_s=3.6 params=262851 minH=1.000 ens_metric=1.0601;ens_masks=5/13/3 warm_frac=0.5 ensemble_topk=3
+1ee8387	kolmo2d	pcgb	512	0	0.849108	0.0572753	720.2	rounds=29 steps=2741 steps_per_s=3.8 params=262851 minH=1.000 ens_metric=0.79212;ens_masks=13/11/5 mask_rule=random warm_frac=0.5 ensemble_topk=3
+1ee8387	kolmo2d	pcgb	512	1	0.820804	0.070331	720.0	rounds=29 steps=2747 steps_per_s=3.8 params=262851 minH=1.000 ens_metric=0.76511;ens_masks=7/13/5 mask_rule=random warm_frac=0.5 ensemble_topk=3
+1ee8387	kolmo2d	pcgb	512	2	0.759579	0.0507293	720.2	rounds=29 steps=2727 steps_per_s=3.8 params=262851 minH=1.000 ens_metric=0.7097;ens_masks=7/11/3 mask_rule=random warm_frac=0.5 ensemble_topk=3
+1ee8387	kolmo2d	pcgb	512	0	1.14177	0.122943	720.1	rounds=29 steps=2759 steps_per_s=3.8 params=262851 minH=1.000 ens_metric=1.0969;ens_masks=13/5/11 mask_rule=softmax warm_frac=0.5 ensemble_topk=3
+1ee8387	kolmo2d	pcgb	512	1	0.944153	0.0800971	720.1	rounds=29 steps=2764 steps_per_s=3.8 params=262851 minH=1.000 ens_metric=0.90943;ens_masks=13/5/11 mask_rule=softmax warm_frac=0.5 ensemble_topk=3
+1ee8387	kolmo2d	pcgb	512	2	1.06404	0.102943	720.1	rounds=29 steps=2792 steps_per_s=3.9 params=262851 minH=1.000 ens_metric=0.94107;ens_masks=5/13/7 mask_rule=softmax warm_frac=0.5 ensemble_topk=3
+1ee8387	kolmo2d	pcgb	512	0	0.84554	0.0607483	720.1	rounds=29 steps=2918 steps_per_s=4.1 params=262851 minH=1.000 ens_metric=0.89949;ens_masks=7/11/3 mask_target=blocks warm_frac=0.5 ensemble_topk=3
+1ee8387	kolmo2d	pcgb	512	1	0.971785	0.0814203	720.1	rounds=29 steps=2907 steps_per_s=4.0 params=262851 minH=1.000 ens_metric=0.80499;ens_masks=7/11/5 mask_target=blocks warm_frac=0.5 ensemble_topk=3
+1ee8387	kolmo2d	pcgb	512	2	0.842765	0.0649387	720.1	rounds=29 steps=2914 steps_per_s=4.0 params=262851 minH=1.000 ens_metric=0.77094;ens_masks=7/11/5 mask_target=blocks warm_frac=0.5 ensemble_topk=3
+1ee8387	kolmo2d	pcgb	512	0	1.14007	0.150573	720.2	rounds=29 steps=2709 steps_per_s=3.8 params=262851 minH=1.000 ens_metric=1.1505;ens_masks=3/7/5 drop_mode=rescale warm_frac=0.5 ensemble_topk=3
+1ee8387	kolmo2d	pcgb	512	1	1.0948	0.120702	720.2	rounds=29 steps=2655 steps_per_s=3.7 params=262851 minH=1.000 ens_metric=1.117;ens_masks=7/5/11 drop_mode=rescale warm_frac=0.5 ensemble_topk=3
+1ee8387	kolmo2d	pcgb	512	2	1.04955	0.218013	720.0	rounds=29 steps=2693 steps_per_s=3.7 params=262851 MASK_COLLAPSE(m=0,23/29) minH=1.000 ens_metric=1.0704;ens_masks=3/1/7 drop_mode=rescale warm_frac=0.5 ensemble_topk=3
