@@ -20,7 +20,6 @@ import time
 import numpy as np
 import torch
 
-torch.set_num_threads(4)  # generation only; train.py sets its own thread count after import
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(HERE, "data")
@@ -39,10 +38,10 @@ def _etdrk4_coeffs(Lop, h, M=64):
     r = torch.exp(1j * math.pi * (torch.arange(1, M + 1, dtype=torch.float64) - 0.5) / M)
     LR = h * Lop[:, None].to(torch.complex128) + r[None, :]
     E, E2 = torch.exp(h * Lop.to(torch.complex128)), torch.exp(h * Lop.to(torch.complex128) / 2)
-    Q = h * ((torch.exp(LR / 2) - 1) / LR).mean(1)
-    f1 = h * ((-4 - LR + torch.exp(LR) * (4 - 3 * LR + LR**2)) / LR**3).mean(1)
-    f2 = h * ((2 + LR + torch.exp(LR) * (-2 + LR)) / LR**3).mean(1)
-    f3 = h * ((-4 - 3 * LR - LR**2 + torch.exp(LR) * (4 - LR)) / LR**3).mean(1)
+    Q = h * ((torch.exp(LR / 2) - 1) / LR).mean(1).real
+    f1 = h * ((-4 - LR + torch.exp(LR) * (4 - 3 * LR + LR**2)) / LR**3).mean(1).real
+    f2 = h * ((2 + LR + torch.exp(LR) * (-2 + LR)) / LR**3).mean(1).real
+    f3 = h * ((-4 - 3 * LR - LR**2 + torch.exp(LR) * (4 - LR)) / LR**3).mean(1).real
     return E, E2, Q, f1, f2, f3
 
 
@@ -53,6 +52,7 @@ def ks_simulate(u0, n_steps, sample_every, dt=0.25, L=22 * math.pi):
     Lop = k**2 - k**4
     E, E2, Q, f1, f2, f3 = [c.to(torch.complex128) for c in _etdrk4_coeffs(Lop, dt)]
     g = -0.5j * k  # nonlinear term: -(1/2) d/dx (u^2)
+    g[-1] = 0  # no derivative of the (real-valued) Nyquist mode
 
     def Nl(v):
         return g * torch.fft.rfft(torch.fft.irfft(v, n=N) ** 2)
@@ -88,24 +88,25 @@ def gen_ks1d(n_traj, seed, burn_time=600.0, dt=0.25, step_dt=2.0, n_snap=N_SNAP)
 
 
 # ----------------------------------------------------------------------------- 2D Kolmogorov flow
-KOLMO = dict(nu=1.0 / 1500, alpha=0.1, kf=4, F0=1.0, nsim=64, ngrid=32, dt=0.01, snap_dt=0.8, burn_time=250.0)
+KOLMO = dict(nu=1.0 / 1500, alpha=0.1, kf=4, F0=1.0, nsim=64, ngrid=32, dt=0.01, snap_dt=0.15, burn_time=100.0)
 
 
-def _kolmo_setup(n):
-    k = torch.fft.fftfreq(n, 1.0 / n).to(torch.float64)
-    kr = torch.fft.rfftfreq(n, 1.0 / n).to(torch.float64)
+def _kolmo_setup(n, dtype=torch.float32):
+    k = torch.fft.fftfreq(n, 1.0 / n).to(dtype)
+    kr = torch.fft.rfftfreq(n, 1.0 / n).to(dtype)
     KX, KY = kr[None, :].expand(n, -1), k[:, None].expand(-1, len(kr))
     K2 = KX**2 + KY**2
     inv = torch.where(K2 > 0, 1.0 / K2.clamp(min=1), torch.zeros_like(K2))
-    mask = ((KX.abs() < n / 3) & (KY.abs() < n / 3)).to(torch.float64)
+    mask = ((KX.abs() < n / 3) & (KY.abs() < n / 3)).to(dtype)
     return KX, KY, K2, inv, mask
 
 
 def kolmo_simulate(w0, n_steps, sample_every, p=KOLMO):
-    """Pseudo-spectral vorticity eq with integrating-factor RK4. w0: [B,n,n] float64 (physical)."""
+    """Pseudo-spectral vorticity eq with integrating-factor RK4 (float32). w0: [B,n,n] (physical)."""
     n = w0.shape[-1]
+    w0 = w0.float()
     KX, KY, K2, inv, mask = _kolmo_setup(n)
-    y = torch.arange(n, dtype=torch.float64) * (2 * math.pi / n)
+    y = torch.arange(n, dtype=torch.float32) * (2 * math.pi / n)
     # forcing: u-forcing f=(F0 sin(kf y),0) -> vorticity forcing  -d/dy f = -F0 kf cos(kf y)
     Fh = torch.fft.rfft2((-p["F0"] * p["kf"] * torch.cos(p["kf"] * y))[:, None].expand(n, n).contiguous())
     lin = -(p["nu"] * K2 + p["alpha"])
@@ -146,7 +147,7 @@ def gen_kolmo2d(n_traj, seed, n_snap=N_SNAP, p=KOLMO):
     g = torch.Generator().manual_seed(seed)
     n = p["nsim"]
     # random smooth IC: band-limited noise, then burn in to the statistical steady state
-    wh = torch.randn(n_traj, n, n // 2 + 1, dtype=torch.complex128, generator=g)
+    wh = torch.randn(n_traj, n, n // 2 + 1, dtype=torch.complex64, generator=g)
     KX, KY, K2, _, _ = _kolmo_setup(n)
     wh = wh * torch.exp(-K2 / 18.0)
     w0 = torch.fft.irfft2(wh, s=(n, n))
@@ -158,7 +159,7 @@ def gen_kolmo2d(n_traj, seed, n_snap=N_SNAP, p=KOLMO):
 
 
 # ----------------------------------------------------------------------------- Gray-Scott
-GS = dict(F=0.035, k=0.065, Du=0.16, Dv=0.08, dt=1.0, burn=6000, snap=200, n=32)
+GS = dict(F=0.04, k=0.06, Du=0.16, Dv=0.08, dt=1.0, burn=6000, snap=200, n=32)
 
 
 def gen_grayscott2d(n_traj, seed, n_snap=N_SNAP, p=GS):
@@ -167,9 +168,9 @@ def gen_grayscott2d(n_traj, seed, n_snap=N_SNAP, p=GS):
     u = torch.ones(n_traj, n, n, dtype=torch.float64)
     v = torch.zeros(n_traj, n, n, dtype=torch.float64)
     for b in range(n_traj):  # random square seeds + noise
-        for _ in range(int(torch.randint(2, 6, (1,), generator=g))):
+        for _ in range(int(torch.randint(6, 13, (1,), generator=g))):
             i, j = torch.randint(0, n, (2,), generator=g).tolist()
-            s = int(torch.randint(2, 5, (1,), generator=g))
+            s = int(torch.randint(3, 7, (1,), generator=g))
             ii, jj = (torch.arange(i, i + s) % n)[:, None], (torch.arange(j, j + s) % n)[None, :]
             u[b, ii, jj], v[b, ii, jj] = 0.5, 0.25
     u += 0.02 * torch.randn(u.shape, generator=g, dtype=torch.float64)
@@ -185,7 +186,9 @@ def gen_grayscott2d(n_traj, seed, n_snap=N_SNAP, p=GS):
                 v + p["dt"] * (p["Dv"] * lap(v) + uvv - (p["F"] + p["k"]) * v))
         if s >= p["burn"] and (s - p["burn"]) % p["snap"] == 0:
             out.append(torch.stack([u, v], 1))
-    return torch.stack(out, 1).float()  # [B,T,2,32,32]
+    out = torch.stack(out, 1).float()  # [B,T,2,32,32]
+    assert out[..., 1, :, :].std((-1, -2)).min() > 0.02, "Gray-Scott pattern died out in some trajectory"
+    return out
 
 
 # ----------------------------------------------------------------------------- denoise
@@ -293,6 +296,7 @@ def _path(name):
 
 
 def generate(name, force=False):
+    torch.set_num_threads(2)  # 4 threads is slower than 2 for these small FFTs; train.py sets its own
     if os.path.exists(_path(name)) and not force:
         return
     os.makedirs(DATA_DIR, exist_ok=True)
@@ -389,14 +393,15 @@ def _divergence_check(name):
         p = KOLMO
         g = torch.Generator().manual_seed(9)
         n = p["nsim"]
-        w0 = torch.randn(1, n, n, dtype=torch.float64, generator=g)
-        w0 = torch.fft.irfft2(torch.fft.rfft2(w0) * torch.exp(-_kolmo_setup(n)[2] / 18.0), s=(n, n))
-        w = kolmo_simulate(w0 / w0.std(), int(p["burn_time"] / p["dt"]), int(p["burn_time"] / p["dt"]), p)[:, -1]
-        w2 = w + 1e-8 * torch.randn(w.shape, generator=g, dtype=torch.float64)
-        per = int(round(p["snap_dt"] / p["dt"])) * 5
-        tr = kolmo_simulate(torch.cat([w, w2]), per * 24, per, p)
+        w0 = torch.fft.irfft2(torch.randn(1, n, n // 2 + 1, dtype=torch.complex64, generator=g)
+                              * torch.exp(-_kolmo_setup(n)[2] / 18.0), s=(n, n))
+        nb = int(p["burn_time"] / p["dt"])
+        w = kolmo_simulate(w0 / w0.std(), nb, nb, p)[:, -1]
+        w2 = w + 1e-4 * torch.randn(w.shape, generator=g)  # float32 sim: perturbation must exceed eps
+        per = int(round(1.0 / p["dt"]))  # sample every 1.0 time unit
+        tr = kolmo_simulate(torch.cat([w, w2]), per * 15, per, p)
         sep = (tr[0] - tr[1]).pow(2).mean((-1, -2)).sqrt()
-        return [f"t={5 * p['snap_dt'] * i:.0f}:{sep[i]:.1e}" for i in range(0, len(sep), 3)]
+        return [f"t={i}:{sep[i]:.1e}" for i in range(0, len(sep), 2)] + [f"(rms w={tr[0].pow(2).mean().sqrt():.2f})"]
     return None
 
 
@@ -425,7 +430,7 @@ def summarize(name, diverge=True):
     if diverge:
         div = _divergence_check(name)
         if div:
-            print("   divergence of 1e-8 perturbation (RMS separation, physical units): " + " ".join(div))
+            print("   divergence of tiny perturbation (ks 1e-8, kolmo 1e-4) (RMS separation, physical units): " + " ".join(div))
 
 
 def main():
