@@ -245,3 +245,9 @@ Decorrelation horizon = first step with nRMSE > 1 (mean over seeds):
 → No PCGB variant beats baseline on Kolmo2D n=512; per-step stochastic depth remains far ahead. Round-level masking
 (even random) is a much worse regulariser than per-step random dropping. **Loop stopped here**: the questions are
 answered cleanly, and further PCGB tuning has shown no trend toward baseline.
+
+## Long-budget check (10× = 120 min/run; jobs/long10x.txt)
+
+Narrowed to the open question "do the gaps close with more training?": ks1d and kolmo2d at n=512 × {baseline,
+stochdepth, pcgb (n_rounds=300 to keep ~24 s rounds)} × 3 seeds, 12 intermediate evals. Same profile (3 concurrent
+1-thread jobs). Dropped reweight_only (inert by construction), denoise/grayscott and the other PCGB variants.
