@@ -172,3 +172,22 @@ _TBD_
 
 - **Reweighting, even when made live (either direction), is neutral on ks1d.** All masking variants remain ≥6× worse
   than baseline. Q3 answer so far: masking hurts, reweighting does nothing; neither half helps.
+
+### Rollout horizon (horizon.py, figs/horizon_*.png; Phase-1 models, val, 50 steps, ICs t0∈{0,5,10})
+
+Decorrelation horizon = first step with nRMSE > 1 (mean over seeds):
+
+| | baseline | stochdepth | pcgb | mask_only | reweight_only |
+|---|---|---|---|---|---|
+| ks1d n512 | 24.7 | 17.3 | 8.7 | 10.0 | 25.3 |
+| ks1d n2048 | 30.0 | 17.7 | 9.0 | 8.0 | 29.3 |
+| kolmo2d n512 | 8.3 | **15.3** | 6.3 | 6.7 | 8.7 |
+| kolmo2d n2048 | 13.3 | **16.7** | 5.7 | 5.0 | 12.7 |
+
+- The step-10 ranking holds at long horizons. On ks1d all arms reach the climatology floor (~1.4) by step 50, so the
+  gaps show up as a shorter predictability horizon, not instability.
+- Kolmo2D: stochdepth has roughly the *same one-step error* as baseline, but its lead grows with horizon. It stays
+  bounded (1.25 at step 50) while baseline/reweight_only drift to 1.5–2.2, worse than predicting zeros. It is
+  mildly smoothed (std ratio 0.86–0.92), and that is why it stays bounded.
+- Masked arms (pcgb/mask_only) on Kolmo2D grow energy (std ratio 1.6–2.6 at step 50; nRMSE 1.8–2.8). This is soft
+  instability; hard blow-ups (non-finite or |x|>20) are ≤ 2% everywhere.
