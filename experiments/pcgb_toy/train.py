@@ -119,7 +119,7 @@ def reweight(D, idx, r, lam=0.3, ratio=5.0):
     D[idx] = (1 - lam) * d + lam * dp
     med = D.median()  # clamp symmetrically (in log space) around the median so max/min <= ratio exactly
     D = D.clamp(med / math.sqrt(ratio), med * math.sqrt(ratio))
-    return D / D.mean()
+    return D / D.mean(), Lbar, beta
 
 
 @torch.no_grad()
@@ -273,7 +273,9 @@ def main(args):
                          train_loss=r_loss / max(r_steps, 1))
             if use_mask or use_rw:
                 idx, r, S = score_round(model, args, X, Y, D, rnd, calib)
-                if use_rw: D = reweight(D, idx, r, args.lam, args.clamp_ratio)
+                if use_rw:
+                    D, Lbar, beta = reweight(D, idx, r, args.lam, args.clamp_ratio)
+                    entry.update(Lbar=Lbar, beta=beta)
                 if use_mask:
                     mask = select_mask(S, args.mask_rule, rng, rnd, args.mask_temp)
                     entry["S"] = S.tolist()

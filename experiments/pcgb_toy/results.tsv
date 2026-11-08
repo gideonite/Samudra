@@ -1,1 +1,4 @@
 commit	dataset	arm	n_train	seed	metric	onestep_mse	wallclock_s	notes
+a8895b9	ks1d	baseline	512	0	0.0605844	5.87581e-05	720.0	rounds=29 steps=11750 steps_per_s=16.3 params=234571
+a8895b9	ks1d	pcgb	512	0	0.693811	0.00753231	720.0	rounds=29 steps=11644 steps_per_s=16.2 params=234571 minH=1.000
+a8895b9	kolmo2d	baseline	512	0	0.731983	0.0530408	720.1	rounds=29 steps=3051 steps_per_s=4.2 params=262851
