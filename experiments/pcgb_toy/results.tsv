@@ -19,3 +19,30 @@ f06f258	kolmo2d	baseline	512	2	0.718305	0.0507753	720.0	rounds=29 steps=3057 ste
 f06f258	kolmo2d	baseline	2048	0	0.524772	0.0322561	720.2	rounds=29 steps=3027 steps_per_s=4.2 params=262851
 f06f258	kolmo2d	baseline	2048	1	0.543393	0.03303	720.0	rounds=29 steps=3020 steps_per_s=4.2 params=262851
 f06f258	kolmo2d	baseline	2048	2	0.515362	0.0320068	720.0	rounds=29 steps=3063 steps_per_s=4.3 params=262851
+f06f258	ks1d	stochdepth	512	0	0.202251	0.000996418	720.0	rounds=29 steps=12298 steps_per_s=17.1 params=234571
+f06f258	ks1d	mask_only	512	0	0.54149	0.00584757	720.0	rounds=29 steps=11699 steps_per_s=16.2 params=234571
+f06f258	ks1d	reweight_only	512	0	0.0611637	5.89248e-05	720.0	rounds=29 steps=11845 steps_per_s=16.5 params=234571 minH=1.000
+87d1bc7	ks1d	stochdepth	2048	0	0.198467	0.00103546	720.0	rounds=29 steps=12168 steps_per_s=16.9 params=234571
+87d1bc7	ks1d	mask_only	2048	0	0.628411	0.00675081	720.0	rounds=29 steps=11592 steps_per_s=16.1 params=234571
+87d1bc7	ks1d	reweight_only	2048	0	0.0231593	1.12598e-05	720.0	rounds=29 steps=11797 steps_per_s=16.4 params=234571 minH=1.000
+87d1bc7	ks1d	pcgb	2048	0	0.59016	0.00451113	720.0	rounds=29 steps=11140 steps_per_s=15.5 params=234571 minH=1.000
+87d1bc7	kolmo2d	stochdepth	512	0	0.523613	0.0491875	720.0	rounds=29 steps=3111 steps_per_s=4.3 params=262851
+87d1bc7	kolmo2d	mask_only	512	0	1.03137	0.169622	720.0	rounds=29 steps=2755 steps_per_s=3.8 params=262851
+87d1bc7	kolmo2d	reweight_only	512	0	0.732326	0.0522862	720.2	rounds=29 steps=3026 steps_per_s=4.2 params=262851 minH=1.000
+87d1bc7	kolmo2d	pcgb	512	0	1.03079	0.157202	720.1	rounds=29 steps=2749 steps_per_s=3.8 params=262851 minH=1.000
+87d1bc7	kolmo2d	stochdepth	2048	0	0.490572	0.0474793	720.2	rounds=29 steps=3102 steps_per_s=4.3 params=262851
+87d1bc7	kolmo2d	mask_only	2048	0	0.930148	0.149598	720.1	rounds=29 steps=2790 steps_per_s=3.9 params=262851
+87d1bc7	kolmo2d	reweight_only	2048	0	0.52793	0.0322274	720.2	rounds=29 steps=3079 steps_per_s=4.3 params=262851 minH=1.000
+87d1bc7	kolmo2d	pcgb	2048	0	0.894939	0.136317	720.0	rounds=29 steps=2818 steps_per_s=3.9 params=262851 minH=1.000
+87d1bc7	ks1d	stochdepth	512	1	0.219611	0.00143382	720.0	rounds=29 steps=12319 steps_per_s=17.1 params=234571
+87d1bc7	ks1d	mask_only	512	1	0.506637	0.006061	720.0	rounds=29 steps=11839 steps_per_s=16.4 params=234571
+87d1bc7	ks1d	reweight_only	512	1	0.0568405	6.1596e-05	720.0	rounds=29 steps=11864 steps_per_s=16.5 params=234571 minH=1.000
+87d1bc7	ks1d	pcgb	512	1	0.58892	0.007839	720.0	rounds=29 steps=11489 steps_per_s=16.0 params=234571 minH=1.000
+87d1bc7	ks1d	stochdepth	2048	1	0.24653	0.00168723	720.1	rounds=29 steps=12160 steps_per_s=16.9 params=234571
+87d1bc7	ks1d	mask_only	2048	1	0.740522	0.0151353	720.0	rounds=29 steps=11525 steps_per_s=16.0 params=234571
+87d1bc7	ks1d	reweight_only	2048	1	0.0272751	1.13976e-05	720.0	rounds=29 steps=11691 steps_per_s=16.2 params=234571 minH=1.000
+87d1bc7	ks1d	pcgb	2048	1	0.54397	0.00308639	720.0	rounds=29 steps=11647 steps_per_s=16.2 params=234571 minH=1.000
+87d1bc7	kolmo2d	stochdepth	512	1	0.543776	0.0511307	720.0	rounds=29 steps=3242 steps_per_s=4.5 params=262851
+87d1bc7	kolmo2d	mask_only	512	1	0.844428	0.118582	720.1	rounds=29 steps=2820 steps_per_s=3.9 params=262851
+87d1bc7	kolmo2d	reweight_only	512	1	0.778708	0.0536308	720.2	rounds=29 steps=3095 steps_per_s=4.3 params=262851 minH=1.000
+87d1bc7	kolmo2d	pcgb	512	1	0.862948	0.112595	720.1	rounds=29 steps=2836 steps_per_s=3.9 params=262851 minH=1.000
