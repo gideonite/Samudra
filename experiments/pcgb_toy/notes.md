@@ -1,8 +1,37 @@
 # PCGB toy study — lab notebook
 
-## Summary (to be filled when stopped; ≤10 lines answering Q1–4)
+## Summary (Q1–4; CPU profile, 12-min wall-clock runs, 3 seeds; full table in final_table.md)
 
-_TBD_
+1. **Premise: half true.** Deep paths do get little gradient: the three bottleneck blocks hold ≤0.5–1% of gradient
+   energy. But the baseline is not an ensemble of paths. On KS1D, removing any single skip or block costs ×3–35,
+   and loss beats persistence only with ≥9 of 14 units kept. On Kolmo2D and denoise the deep paths are simply unused.
+2. **No.** PCGB v1 is ×10 worse than plain training on KS1D (test 0.615 vs 0.068 at n=512) and ×1.2–2 worse on
+   Kolmo2D, denoise and Gray–Scott. Random stochastic depth beats it everywhere and beats baseline on the
+   overfitting-limited sets (Kolmo2D n=512: 0.541 vs 0.760). No PCGB variant in ~20 Phase-2 experiments came within
+   ×6 of baseline on KS1D n=512. The best variant (50% plain warm-up) was a marginal keep that does not survive 6 seeds.
+3. **Neither half helps.** Adversarial skip masking does all the damage: it oscillates between "drop all skips" and
+   "keep all", and it gets worse with more data. AdaBoost.R2 reweighting is a no-op as specified (L̄≈0.67–0.82 > 0.5
+   → β=1). When forced live (squared, p95, no cap, per-pixel), it is neutral: reweight_only ≡ baseline everywhere.
+4. **Nothing physics- or small-n-specific.** PCGB's deficit shrinks as n falls (KS1D ×10 → ×2.8 at n=128). The one
+   PCGB "win" (Kolmo2D n=128, −0.12) is dominated by stochastic depth (−0.45). It behaves as a weak, poorly
+   tuned regulariser. Denoise (non-physics) shows the same pattern.
+   **Best config: plain baseline** for the co-adapted chaotic 1D system, **random stochastic depth** where data
+   limits (Kolmo2D, denoise). Readout caveat: for mask-trained nets the top-3 masked-subnet ensemble beats their
+   own unmasked net (e.g. 0.48→0.32), but it stays far worse than baseline.
+
+### Main table — TEST split (10-step rollout nRMSE; denoise 1-step), mean ± std over 3 seeds
+
+| arm | ks1d 128 | ks1d 512 | ks1d 2048 | kolmo 128 | kolmo 512 | kolmo 2048 | denoise 512 | grayscott 512 |
+|---|---|---|---|---|---|---|---|---|
+| baseline | **0.240±.022** | **0.068±.001** | **0.032±.002** | 1.144±.025 | 0.760±.029 | 0.543±.013 | 0.217±.005 | 0.664±.008 |
+| stochdepth | 0.330±.008 | 0.243±.011 | 0.255±.028 | **0.705±.025** | **0.541±.007** | **0.509±.009** | **0.193±.003** | **0.642±.023** |
+| mask_only | – | 0.503±.035 | 0.682±.058 | – | 0.905±.114 | 1.082±.193 | – | – |
+| reweight_only | – | 0.069±.001 | 0.032±.002 | – | 0.765±.033 | 0.543±.011 | 0.216±.006 | 0.671±.007 |
+| pcgb (v1) | 0.581±.041 | 0.615±.065 | 0.579±.037 | 1.096±.050 | 0.922±.095 | 1.018±.125 | 0.420±.031 | 0.713±.021 |
+| pcgb+warm0.5 | 0.521±.042 | 0.523±.124* | – | 1.029±.040 | – | – | 0.487±.085 | 0.667±.021 |
+
+*seeds 3–5 only (seed 0–2 models lost to the tag-collision bug). Persistence (test): ks1d 1.15, kolmo 1.04,
+denoise 0.65, grayscott 0.66. The val→test best arm agrees in all 8 columns.
 
 ## Setup decisions (frozen)
 
