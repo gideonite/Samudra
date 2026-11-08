@@ -90,3 +90,30 @@ c084f4f	ks1d	pcgb	512	2	0.467846	0.00242641	720.0	rounds=29 steps=11430 steps_pe
 c084f4f	ks1d	pcgb	512	0	0.414866	0.0026772	720.0	rounds=29 steps=11113 steps_per_s=15.4 params=234571 minH=1.000 ens_metric=0.2575;ens_masks=13/7/5 mask_rule=softmax ensemble_topk=3
 c084f4f	ks1d	pcgb	512	1	0.78548	0.0186991	720.0	rounds=29 steps=11195 steps_per_s=15.5 params=234571 minH=1.000 ens_metric=0.37988;ens_masks=1/3/9 mask_rule=softmax ensemble_topk=3
 c084f4f	ks1d	pcgb	512	2	0.39289	0.00182177	720.0	rounds=29 steps=11121 steps_per_s=15.4 params=234571 minH=1.000 ens_metric=0.3351;ens_masks=7/13/5 mask_rule=softmax ensemble_topk=3
+76630c1	ks1d	pcgb	512	0	0.612	0.00906698	720.1	rounds=29 steps=11133 steps_per_s=15.5 params=234571 minH=1.000 ens_metric=0.4959;ens_masks=14/12/6 warm_frac=0.8 ensemble_topk=3
+76630c1	ks1d	pcgb	512	1	0.699428	0.00948627	720.0	rounds=29 steps=11138 steps_per_s=15.5 params=234571 minH=1.000 ens_metric=0.57739;ens_masks=6/13/12 warm_frac=0.8 ensemble_topk=3
+76630c1	ks1d	pcgb	512	2	0.573359	0.0061181	720.0	rounds=29 steps=10837 steps_per_s=15.1 params=234571 minH=1.000 ens_metric=0.39645;ens_masks=14/5/13 warm_frac=0.8 ensemble_topk=3
+76630c1	ks1d	pcgb	512	0	0.506758	0.0026676	720.0	rounds=29 steps=11390 steps_per_s=15.8 params=234571 minH=0.999 ens_metric=0.38348;ens_masks=14/6/12 rw_sq=True warm_frac=0.5 ensemble_topk=3
+76630c1	ks1d	pcgb	512	1	0.551151	0.00466395	720.0	rounds=29 steps=11424 steps_per_s=15.9 params=234571 minH=1.000 ens_metric=0.30434;ens_masks=12/4/6 rw_sq=True warm_frac=0.5 ensemble_topk=3
+76630c1	ks1d	pcgb	512	2	0.412781	0.00202547	720.0	rounds=29 steps=11440 steps_per_s=15.9 params=234571 minH=1.000 ens_metric=0.26091;ens_masks=13/14/5 rw_sq=True warm_frac=0.5 ensemble_topk=3
+76630c1	ks1d	pcgb	512	0	0.442566	0.00434917	720.0	rounds=29 steps=11079 steps_per_s=15.4 params=234571 minH=1.000 ens_metric=0.35887;ens_masks=14/4/6 drop_mode=rescale warm_frac=0.5 ensemble_topk=3
+76630c1	ks1d	pcgb	512	1	0.484259	0.00255424	720.0	rounds=29 steps=11047 steps_per_s=15.3 params=234571 minH=1.000 ens_metric=0.46466;ens_masks=14/10/13 drop_mode=rescale warm_frac=0.5 ensemble_topk=3
+76630c1	ks1d	pcgb	512	2	0.299171	0.00273525	720.0	rounds=29 steps=11194 steps_per_s=15.5 params=234571 minH=1.000 ens_metric=0.31147;ens_masks=14/12/4 drop_mode=rescale warm_frac=0.5 ensemble_topk=3
+76630c1	ks1d	pcgb	512	0	0.589892	0.013519	720.0	rounds=29 steps=11647 steps_per_s=16.2 params=234571 minH=1.000 ens_metric=0.59227;ens_masks=7/13/5 mask_target=blocks warm_frac=0.5 ensemble_topk=3
+76630c1	ks1d	pcgb	512	1	0.612112	0.0056898	720.0	rounds=29 steps=11577 steps_per_s=16.1 params=234571 minH=1.000 ens_metric=0.71636;ens_masks=7/13/5 mask_target=blocks warm_frac=0.5 ensemble_topk=3
+76630c1	ks1d	pcgb	512	2	0.685222	0.00985395	720.0	rounds=29 steps=11675 steps_per_s=16.2 params=234571 minH=1.000 ens_metric=1.1619;ens_masks=7/13/5 mask_target=blocks warm_frac=0.5 ensemble_topk=3
+76630c1	ks1d	pcgb	512	0	0.649149	0.00887328	720.0	rounds=29 steps=11163 steps_per_s=15.5 params=234571 minH=1.000 ens_metric=0.36728;ens_masks=6/4/14 reset_adam=True warm_frac=0.5 ensemble_topk=3
+76630c1	ks1d	pcgb	512	1	0.623572	0.0065938	720.1	rounds=29 steps=11141 steps_per_s=15.5 params=234571 minH=1.000 ens_metric=0.51513;ens_masks=13/12/5 reset_adam=True warm_frac=0.5 ensemble_topk=3
+76630c1	ks1d	pcgb	512	2	0.524807	0.0110692	720.0	rounds=29 steps=11167 steps_per_s=15.5 params=234571 minH=1.000 ens_metric=0.40333;ens_masks=10/14/6 reset_adam=True warm_frac=0.5 ensemble_topk=3
+76630c1	ks1d	pcgb	512	0	1.08373	0.0592236	720.0	rounds=9 steps=11567 steps_per_s=16.1 params=234571 minH=1.000 ens_metric=0.63584;ens_masks=0/8/2 warm_frac=0.5 ensemble_topk=3 n_rounds=10
+76630c1	ks1d	pcgb	512	1	1.06048	0.0466328	720.0	rounds=9 steps=11586 steps_per_s=16.1 params=234571 minH=1.000 ens_metric=0.46428;ens_masks=9/11/1 warm_frac=0.5 ensemble_topk=3 n_rounds=10
+76630c1	ks1d	pcgb	512	2	0.611676	0.0130176	720.0	rounds=9 steps=11688 steps_per_s=16.2 params=234571 minH=1.000 ens_metric=0.36421;ens_masks=11/3/7 warm_frac=0.5 ensemble_topk=3 n_rounds=10
+76630c1	ks1d	reweight_only	512	0	0.058822	5.9037e-05	720.0	rounds=29 steps=11387 steps_per_s=15.8 params=234571 minH=1.000 ens_metric=0.58247;ens_masks=7/13/5 rw_sq=True ensemble_topk=3
+76630c1	ks1d	reweight_only	512	1	0.0571402	6.16166e-05	720.1	rounds=29 steps=11396 steps_per_s=15.8 params=234571 minH=1.000 ens_metric=0.56457;ens_masks=7/13/14 rw_sq=True ensemble_topk=3
+76630c1	ks1d	reweight_only	512	2	0.0606854	6.9058e-05	720.1	rounds=29 steps=11362 steps_per_s=15.8 params=234571 minH=1.000 ens_metric=0.50328;ens_masks=7/13/14 rw_sq=True ensemble_topk=3
+76630c1	ks1d	reweight_only	512	0	0.0579142	5.96722e-05	720.0	rounds=29 steps=11343 steps_per_s=15.8 params=234571 minH=1.000 ens_metric=0.5826;ens_masks=7/13/5 rw_sq=True weight_mode=pixel ensemble_topk=3
+76630c1	ks1d	reweight_only	512	1	0.0527308	6.11794e-05	720.0	rounds=29 steps=11454 steps_per_s=15.9 params=234571 minH=1.000 ens_metric=0.5674;ens_masks=7/13/14 rw_sq=True weight_mode=pixel ensemble_topk=3
+76630c1	ks1d	reweight_only	512	2	0.0650156	7.08765e-05	720.0	rounds=29 steps=11382 steps_per_s=15.8 params=234571 minH=1.000 ens_metric=0.50781;ens_masks=7/13/14 rw_sq=True weight_mode=pixel ensemble_topk=3
+76630c1	ks1d	reweight_only	512	0	0.0580926	5.92143e-05	720.1	rounds=29 steps=11294 steps_per_s=15.7 params=234571 minH=0.996 ens_metric=0.58047;ens_masks=7/13/5 rw_norm=p95 beta_cap=inf ensemble_topk=3
+76630c1	ks1d	reweight_only	512	1	0.0537354	6.17911e-05	720.0	rounds=29 steps=11348 steps_per_s=15.8 params=234571 minH=0.996 ens_metric=0.56689;ens_masks=7/13/14 rw_norm=p95 beta_cap=inf ensemble_topk=3
+76630c1	ks1d	reweight_only	512	2	0.0612222	7.09107e-05	720.0	rounds=29 steps=11225 steps_per_s=15.6 params=234571 minH=0.996 ens_metric=0.4956;ens_masks=7/13/14 rw_norm=p95 beta_cap=inf ensemble_topk=3

@@ -155,3 +155,20 @@ _TBD_
   those nets are still far worse than plain training. The deployed unmasked net is the wrong readout for PCGB.
 - Bug found: run tags omitted flags, so screen-1 run dirs overwrote each other (results.tsv rows are intact; only
   per-round logs lost). Fixed: tag now ends with a hash of non-default flags.
+
+### Screen 2 (incumbent pcgb + warm_frac=0.5 = 0.478 ± 0.016). Keep rule: Δ > 2·max(std_inc, std_cand).
+
+| change | metric | verdict |
+|---|---|---|
+| warm_frac 0.8 (instead of 0.5) | 0.628 ± 0.065 | revert — more warm-up is *worse* (masked rounds compressed into 20% at low LR) |
+| + rw_sq | 0.490 ± 0.071 | revert |
+| + drop_mode=rescale | 0.409 ± 0.097 | inconclusive (Δ 0.07 < 0.19); +3 seeds queued |
+| + mask_target=blocks | 0.629 ± 0.050 | revert |
+| + reset_adam | 0.599 ± 0.066 | revert |
+| + n_rounds=10 (longer rounds) | 0.919 ± 0.266 | revert — long masked rounds wreck the net |
+| reweight_only + rw_sq (live, ratio ≈1.4) | 0.059 ± 0.002 | = baseline (0.060 ± 0.004) |
+| reweight_only + pixel weights + rw_sq | 0.059 ± 0.006 | = baseline; pixel weights stay inert (β=1, L̄ 0.64–0.78) |
+| reweight_only + p95, β cap removed (ratio ≈3.1, anti-boosting since β>1) | 0.058 ± 0.004 | = baseline |
+
+- **Reweighting, even when made live (either direction), is neutral on ks1d.** All masking variants remain ≥6× worse
+  than baseline. Q3 answer so far: masking hurts, reweighting does nothing; neither half helps.
