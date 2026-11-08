@@ -5,3 +5,6 @@ a8895b9	kolmo2d	baseline	512	0	0.731983	0.0530408	720.1	rounds=29 steps=3051 ste
 f5d18a7	denoise	baseline	512	0	0.216952	0.0470684	720.1	rounds=29 steps=3339 steps_per_s=4.6 params=262851
 f5d18a7	ks1d	baseline	128	0	0.177839	0.000869895	720.0	rounds=29 steps=11822 steps_per_s=16.4 params=234571
 f5d18a7	ks1d	baseline	128	1	0.208678	0.000962278	720.1	rounds=29 steps=11758 steps_per_s=16.3 params=234571
+61a7986	ks1d	baseline	128	2	0.22849	0.000942758	720.0	rounds=29 steps=12638 steps_per_s=17.6 params=234571
+61a7986	ks1d	baseline	512	1	0.0558763	6.27975e-05	720.0	rounds=29 steps=12693 steps_per_s=17.6 params=234571
+61a7986	ks1d	baseline	512	2	0.0634497	6.96807e-05	720.0	rounds=29 steps=12539 steps_per_s=17.4 params=234571
