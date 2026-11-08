@@ -191,3 +191,22 @@ Decorrelation horizon = first step with nRMSE > 1 (mean over seeds):
   mildly smoothed (std ratio 0.86–0.92), and that is why it stays bounded.
 - Masked arms (pcgb/mask_only) on Kolmo2D grow energy (std ratio 1.6–2.6 at step 50; nRMSE 1.8–2.8). This is soft
   instability; hard blow-ups (non-finite or |x|>20) are ≤ 2% everywhere.
+
+### Screen 3: reseed, regime (n=128) and generalisation (denoise, grayscott2d at n=512)
+
+- Rescale vs incumbent with 6 seeds: 0.425 ± 0.088 vs 0.497 ± 0.090 → revert. With 6 seeds the incumbent's own std
+  is 0.090, so the earlier warm_frac keep (0.619 → 0.497) is **marginal**: it does not clear 2σ with the larger sample.
+
+| config (val, 3 seeds) | baseline | stochdepth | reweight_only | pcgb v1 | pcgb+warm0.5 |
+|---|---|---|---|---|---|
+| ks1d n=128 | **0.205 ± 0.026** | 0.311 ± 0.019 | – | 0.574 ± 0.055 | 0.520 ± 0.030 |
+| kolmo2d n=128 | 1.140 ± 0.034 | **0.692 ± 0.025** | – | 1.096 ± 0.039 | 1.024 ± 0.050 |
+| denoise n=512 | 0.217 ± 0.004 | **0.193 ± 0.003** | 0.217 ± 0.004 | 0.417 ± 0.030 | 0.483 ± 0.083 |
+| grayscott2d n=512 | 0.682 ± 0.037 | 0.664 ± 0.034 | 0.686 ± 0.027 | 0.742 ± 0.028 | 0.695 ± 0.015 |
+
+- **Regime (Q4)**: PCGB's deficit vs baseline shrinks as n falls on ks1d (×10 at 512 → ×2.8 at 128). Kolmo2D n=128
+  is the only place a PCGB arm beats baseline (warm: −0.12, just over 2σ), but there stochdepth is −0.45 and PCGB
+  stays at the persistence level. PCGB behaves like a weak, badly tuned regulariser: useful only where plain training
+  overfits catastrophically, and dominated by random stochastic depth there.
+- **Physics vs non-physics**: no physics-specific benefit. On denoise PCGB is ×2 worse (stochdepth −11%); on
+  non-chaotic grayscott all arms are within noise except pcgb v1 (+9%).

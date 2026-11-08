@@ -144,3 +144,29 @@ e7d403f	kolmo2d	pcgb	128	2	1.02951	0.137763	720.1	rounds=29 steps=2633 steps_per
 e7d403f	denoise	stochdepth	512	0	0.190381	0.036245	720.1	rounds=29 steps=3537 steps_per_s=4.9 params=262851
 e7d403f	denoise	pcgb	512	0	0.384123	0.14755	720.1	rounds=29 steps=3166 steps_per_s=4.4 params=262851 minH=1.000
 e7d403f	denoise	reweight_only	512	0	0.215724	0.0465367	720.0	rounds=29 steps=3515 steps_per_s=4.9 params=262851 minH=1.000
+e7d403f	denoise	baseline	512	1	0.220557	0.0486454	720.0	rounds=29 steps=3257 steps_per_s=4.5 params=262851
+e7d403f	denoise	pcgb	512	0	0.576676	0.332555	720.1	rounds=29 steps=2995 steps_per_s=4.2 params=262851 minH=1.000 ens_metric=0.44715;ens_masks=1/9/5 warm_frac=0.5 ensemble_topk=3
+e7d403f	denoise	stochdepth	512	1	0.194389	0.0377871	720.0	rounds=29 steps=3380 steps_per_s=4.7 params=262851
+a23fe91	denoise	pcgb	512	1	0.443503	0.196695	720.1	rounds=29 steps=3128 steps_per_s=4.3 params=262851 minH=1.000
+a23fe91	denoise	reweight_only	512	1	0.220964	0.0488252	720.0	rounds=29 steps=3437 steps_per_s=4.8 params=262851 minH=1.000
+a23fe91	denoise	pcgb	512	1	0.452634	0.204877	720.1	rounds=29 steps=2985 steps_per_s=4.1 params=262851 minH=1.000 ens_metric=0.40818;ens_masks=9/1/13 warm_frac=0.5 ensemble_topk=3
+a23fe91	denoise	baseline	512	2	0.21307	0.0453989	720.2	rounds=29 steps=3265 steps_per_s=4.5 params=262851
+a23fe91	denoise	stochdepth	512	2	0.195317	0.0381488	720.1	rounds=29 steps=3436 steps_per_s=4.8 params=262851
+a23fe91	denoise	pcgb	512	2	0.422682	0.17866	720.0	rounds=29 steps=3149 steps_per_s=4.4 params=262851 minH=1.000
+a23fe91	denoise	reweight_only	512	2	0.21393	0.0457662	720.2	rounds=29 steps=3306 steps_per_s=4.6 params=262851 minH=1.000
+a23fe91	denoise	pcgb	512	2	0.418168	0.174865	720.2	rounds=29 steps=2963 steps_per_s=4.1 params=262851 minH=1.000 ens_metric=0.38311;ens_masks=1/9/3 warm_frac=0.5 ensemble_topk=3
+a23fe91	grayscott2d	baseline	512	0	0.723192	0.0444407	720.2	rounds=29 steps=2905 steps_per_s=4.0 params=262952
+a23fe91	grayscott2d	stochdepth	512	0	0.6969	0.0403806	720.1	rounds=29 steps=2992 steps_per_s=4.2 params=262952
+a23fe91	grayscott2d	pcgb	512	0	0.771009	0.052138	720.3	rounds=29 steps=2613 steps_per_s=3.6 params=262952 minH=0.998
+a23fe91	grayscott2d	reweight_only	512	0	0.716152	0.0441676	720.2	rounds=29 steps=2911 steps_per_s=4.0 params=262952 minH=0.996
+a23fe91	grayscott2d	pcgb	512	0	0.709704	0.0440445	720.2	rounds=29 steps=2701 steps_per_s=3.8 params=262952 minH=0.997 ens_metric=0.72454;ens_masks=7/13/14 warm_frac=0.5 ensemble_topk=3
+a23fe91	grayscott2d	baseline	512	1	0.671569	0.0394509	720.1	rounds=29 steps=2948 steps_per_s=4.1 params=262952
+a23fe91	grayscott2d	stochdepth	512	1	0.663693	0.0368319	720.0	rounds=29 steps=3130 steps_per_s=4.3 params=262952
+a23fe91	grayscott2d	pcgb	512	1	0.715116	0.0470747	720.2	rounds=29 steps=2682 steps_per_s=3.7 params=262952 minH=0.998
+a23fe91	grayscott2d	reweight_only	512	1	0.677846	0.0378347	720.0	rounds=29 steps=2956 steps_per_s=4.1 params=262952 minH=0.997
+a23fe91	grayscott2d	pcgb	512	1	0.679574	0.043765	720.1	rounds=29 steps=2619 steps_per_s=3.6 params=262952 minH=0.997 ens_metric=0.69964;ens_masks=13/7/5 warm_frac=0.5 ensemble_topk=3
+a23fe91	grayscott2d	baseline	512	2	0.652529	0.0357713	720.2	rounds=29 steps=2895 steps_per_s=4.0 params=262952
+a23fe91	grayscott2d	stochdepth	512	2	0.629929	0.0350139	720.0	rounds=29 steps=3013 steps_per_s=4.2 params=262952
+a23fe91	grayscott2d	pcgb	512	2	0.73963	0.0465618	720.1	rounds=29 steps=2673 steps_per_s=3.7 params=262952 minH=0.999
+a23fe91	grayscott2d	reweight_only	512	2	0.66428	0.0348025	720.2	rounds=29 steps=2927 steps_per_s=4.1 params=262952 minH=0.998
+a23fe91	grayscott2d	pcgb	512	2	0.696753	0.0456397	720.2	rounds=29 steps=2628 steps_per_s=3.6 params=262952 minH=0.998 ens_metric=0.68468;ens_masks=6/14/7 warm_frac=0.5 ensemble_topk=3
