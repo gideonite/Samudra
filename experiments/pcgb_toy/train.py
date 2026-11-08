@@ -10,6 +10,10 @@ Conventions
 - Rounds are wall-clock slices: round t ends when elapsed >= (t+1) * budget / n_rounds, so every arm
   (including baseline/stochdepth, which just log) shares the same slicing; K (steps/round) is whatever fits.
   Scoring + reweighting time is spent inside the slice, i.e. it is charged to the budget.
+- Mask candidates (--mask_target): skips = 16 skip masks (id = mask id); blocks = 11 (0 = all-keep, 1+b = block b removed);
+  both = 16 skip masks + 10 single-block removals (id 16+b). Names via cand_names().
+- Weights (--weight_mode): sample = D[i] per training sample (v1); pixel = W over (C, *spatial) positions.
+  --rw_on heldout: D lives on the calibration pairs and only weights the mask score S; the training loss is unweighted.
 """
 import argparse, fcntl, json, math, os, random, subprocess, sys, time
 from pathlib import Path
@@ -27,10 +31,13 @@ N_SKIPS, N_BLOCKS = 4, 10
 
 
 # ----------------------------------------------------------------------------- model
-DROP_FNS = {  # (skip tensor, scale in [0,1] or 1/(1-p)) -> tensor fed to the decoder. Add new modes here.
-    "zero": lambda s, k: s * k,
-    "mean": lambda s, k: s * k + (1 - k) * s.mean(dim=tuple(range(2, s.ndim)), keepdim=True),
+DROP_FNS = {  # (skip tensor, scale in [0,1] or 1/(1-p), learned null) -> tensor fed to the decoder. Add new modes here.
+    "zero": lambda s, k, z: s * k,
+    "mean": lambda s, k, z: s * k + (1 - k) * s.mean(dim=tuple(range(2, s.ndim)), keepdim=True),
+    "rescale": lambda s, k, z: s * k,  # dropped = zero; the compensation (kept skips x 4/(4-k)) lives in UNet.decode
+    "learned": lambda s, k, z: s * k + (1 - k) * z,  # z = per-skip per-channel learnable constant (init 0)
 }
+BLOCK_NAMES = ["d0", "d1", "d2", "d3", "mid", "u5", "u6", "u7", "u8", "fin"]
 
 
 class Block(nn.Module):
@@ -56,7 +63,7 @@ class UNet(nn.Module):
         k = 7 if nd == 1 else 5
         conv = (nn.Conv1d, nn.Conv2d)[nd - 1]
         ch = [width * m for m in (1, 2, 4, 8, 8)]
-        self.drop = DROP_FNS[drop_mode]
+        self.drop_mode, self.drop = drop_mode, DROP_FNS[drop_mode]
         self.stem = conv(cin, ch[0], 3, padding=1, padding_mode="circular" if per else "zeros")
         self.blocks = nn.ModuleList([Block(c, nd, k, per) for c in ch[:4] + [ch[4]] + ch[3::-1] + [ch[0]]])
         self.downs = nn.ModuleList([conv(ch[i], ch[i + 1], 2, stride=2) for i in range(4)])
@@ -64,6 +71,8 @@ class UNet(nn.Module):
         self.head = conv(ch[0], cin, 1)
         with torch.no_grad():
             self.head.weight.mul_(0.1), self.head.bias.zero_()
+        self.null = nn.ParameterList([nn.Parameter(torch.zeros(1, ch[i], *[1] * nd)) for i in range(N_SKIPS)]
+                                     if drop_mode == "learned" else [])  # created last: no RNG use, no params by default
         self.mode = "nearest"
         self.skip_gnorm = [0.0] * N_SKIPS  # filled by hooks when track_grads is set
         self.track_grads = False
@@ -79,9 +88,12 @@ class UNet(nn.Module):
         return self.blocks[4](h, bm[4]), skips
 
     def decode(self, x, h, skips, sm, bm):
+        n_drop = sum(v == 0.0 for v in sm)
+        resc = N_SKIPS / (N_SKIPS - n_drop) if self.drop_mode == "rescale" and 0 < n_drop < N_SKIPS else 1.0
         for j in range(4):
             i = 3 - j
-            s = skips[i] if sm[i] == 1.0 else self.drop(skips[i], sm[i])
+            if sm[i] == 1.0: s = skips[i] if resc == 1.0 else skips[i] * resc
+            else: s = self.drop(skips[i], sm[i], self.null[i] if len(self.null) else None)
             if self.track_grads and s.requires_grad:  # grad flowing into the tensor consumed by the decoder
                 s.register_hook(lambda g, i=i: self.skip_gnorm.__setitem__(i, float(g.norm())))
             h = self.projs[j](torch.cat([F.interpolate(h, scale_factor=2, mode=self.mode), s], 1))
@@ -99,6 +111,27 @@ def mask_bools(m):
     return [bool((m >> i) & 1) for i in range(N_SKIPS)]
 
 
+class Cands(list):
+    """Mask candidates: (skip_keep_bools, block_keep_bools|None) per id; .names readable, .keep = id of the all-keep net."""
+    def __init__(self, items, names, keep): super().__init__(items); self.names, self.keep = names, keep
+
+
+def make_cands(target):
+    sk = [(mask_bools(m), None) for m in range(16)]
+    bl = [([True] * N_SKIPS, [i != b for i in range(N_BLOCKS)]) for b in range(N_BLOCKS)]
+    sn, bn = [f"s{m:04b}" for m in range(16)], [f"-{n}" for n in BLOCK_NAMES]
+    if target == "skips": return Cands(sk, sn, 15)
+    if target == "blocks": return Cands([([True] * N_SKIPS, None)] + bl, ["keep"] + bn, 0)
+    return Cands(sk + bl, sn + bn, 15)
+
+
+def pair_positions(name, split, n, seed):
+    """Mirror prepare.get_train_pairs/get_calib_pairs indexing (prepare.py is frozen): (trajectories, traj idx, time idx)."""
+    x = prepare.load(name)[split]; T = x.shape[1]
+    idx = torch.from_numpy(np.random.default_rng(seed).permutation(x.shape[0] * (T - 1))[:n])
+    return x, idx // (T - 1), idx % (T - 1)
+
+
 # ----------------------------------------------------------------------------- PCGB pieces
 def weight_stats(D):
     p = D / D.sum()
@@ -106,13 +139,21 @@ def weight_stats(D):
     return ent, float(D.max() / D.min())
 
 
-def reweight(D, idx, r, lam=0.3, ratio=5.0):
-    """AdaBoost.R2 variant on the scored subset `idx` (residual norms r); D elsewhere stays stale.
-    D' is rescaled to the subset's D-mass so that 0.7*D + 0.3*D' mixes consistently. Then clamp + mean-1."""
+def reweight(D, idx, e, lam=0.3, ratio=5.0, norm="max", beta_cap=1.0, sq=False):
+    """AdaBoost.R2 variant on the scored subset `idx` (mean squared residuals e; D elsewhere stays stale).
+    D' is rescaled to the subset's D-mass so that 0.7*D + 0.3*D' mixes consistently. Then clamp + mean-1.
+    r = sqrt(e) (or e itself with sq=True). L = r/max r (v1) | min(r/p95(r), 1) | rank(r)/N.
+    beta = min(Lbar/(1-Lbar), beta_cap). Lbar < 0.5 gives beta < 1: D' = D*beta^(1-L) then down-weights EASY samples
+    (low L) and keeps hard ones. Lbar > 0.5 gives beta > 1 (only possible with beta_cap > 1): the sign flips and
+    EASY samples are up-weighted (anti-boosting). With the default cap 1.0, Lbar >= 0.5 is an exact no-op."""
     d = D[idx]
-    L = r / r.max().clamp_min(1e-12)
+    r = e if sq else e.sqrt()
+    if norm == "max": L = r / r.max().clamp_min(1e-12)
+    elif norm == "p95": L = (r / torch.quantile(r, 0.95).clamp_min(1e-12)).clamp(max=1.0)
+    elif norm == "rank": L = (r.argsort().argsort().float() + 1) / len(r)
+    else: raise ValueError(norm)
     Lbar = float(((d / d.sum()) * L).sum())
-    beta = min(Lbar / max(1 - Lbar, 1e-12), 1.0)
+    beta = min(Lbar / max(1 - Lbar, 1e-12), beta_cap)
     dp = d * beta ** (1 - L)
     dp = dp * d.sum() / dp.sum()
     D = D.clone()
@@ -123,39 +164,70 @@ def reweight(D, idx, r, lam=0.3, ratio=5.0):
 
 
 @torch.no_grad()
-def score_round(model, args, X, Y, D, rnd, calib):
-    """Returns (idx, r, S[16] or None). Scoring subset = strided slice of the TRAIN set (<=256 samples),
-    offset by round so all samples get visited. r = per-sample RMS residual of the unmasked net.
-    S[m] = mean_i D_i * mse_i(masked net m) on the same subset (--score_on train, D lives on train samples),
-    or the unweighted mean over calibration pairs (--score_on calib)."""
-    n = len(X)
+def score_round(model, args, pools, D, rnd, cands):
+    """Returns (idx, e, S[len(cands)] or None): idx indexes D, e = mean squared residual of the unmasked net per D entry
+    (per sample, or per pixel with --weight_mode pixel). Scoring subset = strided slice (<=score_n samples) of the pool,
+    offset by round so all samples get visited. Pool = train, or calib with --rw_on heldout.
+    S[c] = mean D-weighted mse of candidate c on the subset (--score_on train or --rw_on heldout: D lives on the pool),
+    or the unweighted mean over calibration pairs (--score_on calib). --mask_score_hiw Q restricts S to the samples
+    (pixels in pixel mode) whose D is in the top-Q fraction. --rw_rollout H: e is averaged over an H-step rollout."""
+    pixel = args.weight_mode == "pixel"
+    Xp, Yp, pos = pools["calib" if args.rw_on == "heldout" else "train"]
+    n = len(Xp)
     stride = math.ceil(n / args.score_n)
     idx = torch.arange(rnd % stride, n, stride)[: args.score_n]
-    x, y = X[idx], Y[idx]
+    H = args.rw_rollout
+    if H > 1:  # drop samples whose H-step future runs off the trajectory end
+        trajs, ti, tt = pos
+        idx = idx[tt[idx] + H <= trajs.shape[1] - 1]
+        assert len(idx) > 0
+    x, y = Xp[idx], Yp[idx]
     model.eval()
-    def err(xx, yy, m, enc=None): return ((model(xx, skip_mask=mask_bools(m), enc=enc) - yy) ** 2).flatten(1).mean(1)
-    enc = model.encode(x, [1.0] * N_BLOCKS)  # encoder is mask-independent: compute once for all 16 masks
-    e_full = err(x, y, 15, enc)
+    def se(xx, yy, c, enc=None):
+        sk, bk = cands[c]
+        return (model(xx, skip_mask=sk, block_mask=bk, enc=enc if bk is None else None) - yy) ** 2
+    enc = model.encode(x, [1.0] * N_BLOCKS)  # encoder is mask-independent for skip masks: compute once
+    se_full = se(x, y, cands.keep, enc)
+    if H > 1:
+        se_full, xr = 0.0, x
+        for h in range(1, H + 1):
+            xr = model(xr); se_full = se_full + (xr - trajs[ti[idx], tt[idx] + h]) ** 2
+        se_full = se_full / H
+    e, ridx = (se_full.mean(0).flatten(), torch.arange(len(D))) if pixel else (se_full.flatten(1).mean(1), idx)
     S = None
     if args.arm in ("mask_only", "pcgb"):
-        if args.score_on == "train":
-            S = torch.stack([(D[idx] * (e_full if m == 15 else err(x, y, m, enc))).mean() for m in range(16)])
+        if args.score_on == "train" or args.rw_on == "heldout":
+            def red(s):
+                if pixel:
+                    w, sf = D, s.flatten(1)
+                    if args.mask_score_hiw: k = math.ceil(args.mask_score_hiw * len(w)); sel = w.topk(k).indices; w, sf = w[sel], sf[:, sel]
+                    return (w * sf).mean()
+                w, m = D[idx], s.flatten(1).mean(1)
+                if args.mask_score_hiw: sel = w.topk(math.ceil(args.mask_score_hiw * len(w))).indices; w, m = w[sel], m[sel]
+                return (w * m).mean()
+            S = torch.stack([red(se_full if c == cands.keep and H == 1 else se(x, y, c, enc)) for c in range(len(cands))])
         else:
-            xc, yc = calib[0][: args.score_n], calib[1][: args.score_n]
+            if args.mask_score_hiw: raise ValueError("--mask_score_hiw needs D on the scoring pool (score_on train or rw_on heldout)")
+            xc, yc = pools["calib"][0][: args.score_n], pools["calib"][1][: args.score_n]
             encc = model.encode(xc, [1.0] * N_BLOCKS)
-            S = torch.stack([err(xc, yc, m, encc).mean() for m in range(16)])
+            S = torch.stack([se(xc, yc, c, encc).flatten(1).mean(1).mean() for c in range(len(cands))])
     model.train()
-    return idx, e_full.sqrt(), S
+    return ridx, e, S
 
 
-def select_mask(S, rule, rng, rnd, temp):
-    if rule == "argmax": return int(S.argmax())
-    if rule == "argmin": return int(S.argmin())
-    if rule == "random": return rng.randrange(16)
-    if rule == "roundrobin": return rnd % 16
+def select_mask(S, rule, rng, rnd, temp, excl=(), banned=()):
+    """Pick a candidate id. excl = statically excluded ids, banned = recently used ids (--norepeat); roundrobin ignores banned."""
+    ok = [c for c in range(len(S)) if c not in excl]
+    allowed = [c for c in ok if c not in banned]
+    if not allowed: raise ValueError("no mask candidates left after --norepeat/--mask_exclude_all_drop")
+    Sa = S[allowed]
+    if rule == "argmax": return allowed[int(Sa.argmax())]
+    if rule == "argmin": return allowed[int(Sa.argmin())]
+    if rule == "random": return allowed[rng.randrange(len(allowed))]
+    if rule == "roundrobin": return ok[rnd % len(ok)]
     if rule == "softmax":
-        p = torch.softmax((S - S.mean()) / (S.std() + 1e-12) / temp, 0).tolist()
-        return rng.choices(range(16), weights=p)[0]
+        p = torch.softmax((Sa - Sa.mean()) / (Sa.std() + 1e-12) / temp, 0).tolist()
+        return allowed[rng.choices(range(len(allowed)), weights=p)[0]]
     raise ValueError(rule)
 
 
@@ -207,6 +279,19 @@ def append_row(path, row):
         fcntl.flock(f, fcntl.LOCK_UN)
 
 
+def ensemble_eval(model, name, calib, K):
+    """Score the 15 masked (not all-keep) skip masks on calib one-step mse; eval the average prediction of the K lowest-S
+    nets (averaged at every autoregressive step) on val. Returns log fields."""
+    model.eval()
+    with torch.no_grad():
+        xc, yc = calib; enc = model.encode(xc, [1.0] * N_BLOCKS)
+        S = [float(((model(xc, skip_mask=mask_bools(m), enc=enc) - yc) ** 2).mean()) for m in range(15)]
+        ms = sorted(range(15), key=S.__getitem__)[:K]
+        out = prepare.evaluate(lambda x: torch.stack([model(x, skip_mask=mask_bools(m)) for m in ms]).mean(0), name, split="val")
+    model.train()
+    return dict(ens_metric=out["metric"], ens_onestep_mse=out["onestep_mse"], ens_masks=ms, ens_S=[S[m] for m in ms])
+
+
 def build_model(meta, width=10, drop_mode="zero"):
     return UNet(meta, width, drop_mode)
 
@@ -221,7 +306,8 @@ def get_args(argv=None):
     p.add_argument("--eval_test", action="store_true"); p.add_argument("--n_evals", type=int, default=6)
     p.add_argument("--lr", type=float, default=1e-3); p.add_argument("--wd", type=float, default=1e-4)
     p.add_argument("--clip", type=float, default=1.0); p.add_argument("--bs", type=int, default=32)
-    p.add_argument("--width", type=int, default=10); p.add_argument("--drop_mode", default="zero", choices=list(DROP_FNS))
+    p.add_argument("--width", type=int, default=10); p.add_argument("--drop_mode", default="zero", choices=list(DROP_FNS),
+                   help="zero | mean | rescale (kept skips x 4/(4-k)) | learned (per-skip null tensor)")
     p.add_argument("--n_rounds", type=int, default=30)
     p.add_argument("--score_n", type=int, default=128); p.add_argument("--score_on", choices=["train", "calib"], default="train")
     p.add_argument("--lam", type=float, default=0.3); p.add_argument("--clamp_ratio", type=float, default=5.0)
@@ -231,6 +317,20 @@ def get_args(argv=None):
     p.add_argument("--sd_skip_p", type=float, default=0.2, help="stochdepth: skip drop prob")
     p.add_argument("--sd_block_p", type=float, default=0.1, help="stochdepth: block p_l = sd_block_p*(l+1)/10")
     p.add_argument("--log_grad_norms", type=int, default=0, help="every N steps log block/skip grad norms (0=off)")
+    # ---- Phase 2 flags (defaults = v1 behaviour)
+    p.add_argument("--rw_norm", choices=["max", "p95", "rank"], default="max", help="residual normalisation for L (see reweight)")
+    p.add_argument("--beta_cap", type=float, default=1.0, help="cap on beta=Lbar/(1-Lbar); inf = none (beta>1 flips the sign)")
+    p.add_argument("--rw_sq", action="store_true", help="L from squared residuals instead of residual norms")
+    p.add_argument("--rw_on", choices=["train", "heldout"], default="train",
+                   help="heldout: D lives on calib pairs and only weights S; training loss unweighted")
+    p.add_argument("--norepeat", type=int, default=0, help="forbid the last K chosen masks (the current one counts)")
+    p.add_argument("--mask_exclude_all_drop", action="store_true", help="exclude candidate 0 (all skips dropped)")
+    p.add_argument("--mask_score_hiw", type=float, default=0.0, help="S only over samples/pixels with D in the top-Q fraction")
+    p.add_argument("--mask_target", choices=["skips", "blocks", "both"], default="skips")
+    p.add_argument("--weight_mode", choices=["sample", "pixel"], default="sample")
+    p.add_argument("--warm_frac", type=float, default=0.0, help="first F of the budget = plain training, then n_rounds PCGB rounds")
+    p.add_argument("--ensemble_topk", type=int, default=0, help="after training: also eval avg of the K lowest-S masked nets")
+    p.add_argument("--rw_rollout", type=int, default=1, help="H-step rollout residuals for reweighting (1 = one-step, v1)")
     return p.parse_args(argv)
 
 
@@ -245,6 +345,12 @@ def main(args):
     meta = prepare.load(name)["meta"]
     X, Y = prepare.get_train_pairs(name, args.n_train, args.seed)
     calib = prepare.get_calib_pairs(name, 256, 0)
+    if args.mask_exclude_all_drop and args.mask_target == "blocks": raise ValueError("blocks target has no all-drop candidate")
+    cands = make_cands(args.mask_target)
+    pools = {"train": (X, Y, None), "calib": (*calib, None)}
+    if args.rw_rollout > 1:
+        pools = {k: (*v[:2], pair_positions(name, k, len(v[0]), args.seed if k == "train" else 0)) for k, v in pools.items()}
+        for k, v in pools.items(): assert torch.equal(v[2][0][v[2][1], v[2][2]], v[0]), "pair_positions drifted from prepare"
     n, bs = len(X), min(args.bs, len(X))
     model = build_model(meta, args.width, args.drop_mode).train()
     n_params = sum(p.numel() for p in model.parameters())
@@ -255,9 +361,11 @@ def main(args):
     log(type="config", **vars(args), n_params=n_params, commit=commit)
 
     use_mask, use_rw = arm in ("mask_only", "pcgb"), arm in ("reweight_only", "pcgb")
-    D, mask = torch.ones(n), 15
-    slice_s, eval_s = args.budget_s / args.n_rounds, args.budget_s / args.n_evals
-    next_round, next_eval = slice_s, eval_s
+    n_w = int(np.prod([meta["channels"], *meta["spatial"]])) if args.weight_mode == "pixel" else (len(calib[0]) if args.rw_on == "heldout" else n)
+    D, mask, hist = torch.ones(n_w), cands.keep, [cands.keep]
+    warm = args.warm_frac * args.budget_s
+    slice_s, eval_s = (args.budget_s - warm) / args.n_rounds, args.budget_s / args.n_evals
+    next_round, next_eval = warm + slice_s, eval_s
     step = rnd = r_steps = 0; r_loss = 0.0
     masks, ents, diverged, curve = [], [], False, []
     t0 = time.perf_counter()
@@ -272,34 +380,39 @@ def main(args):
             entry = dict(type="round", round=rnd, steps=step, K=r_steps, elapsed=el, mask=mask,
                          train_loss=r_loss / max(r_steps, 1))
             if use_mask or use_rw:
-                idx, r, S = score_round(model, args, X, Y, D, rnd, calib)
+                idx, e, S = score_round(model, args, pools, D, rnd, cands)
                 if use_rw:
-                    D, Lbar, beta = reweight(D, idx, r, args.lam, args.clamp_ratio)
+                    D, Lbar, beta = reweight(D, idx, e, args.lam, args.clamp_ratio, args.rw_norm, args.beta_cap, args.rw_sq)
                     entry.update(Lbar=Lbar, beta=beta)
                 if use_mask:
-                    mask = select_mask(S, args.mask_rule, rng, rnd, args.mask_temp)
-                    entry["S"] = S.tolist()
+                    mask = select_mask(S, args.mask_rule, rng, rnd, args.mask_temp, (0,) * args.mask_exclude_all_drop,
+                                       hist[-args.norepeat:] if args.norepeat else ())
+                    hist.append(mask)
+                    entry.update(S=S.tolist(), keep_rank=int((S > S[cands.keep]).sum()) + 1, next_name=cands.names[mask])
                 masks.append(mask)
                 entry["next_mask"] = mask; entry["score_s"] = time.perf_counter() - t0 - el
             ent, ratio = weight_stats(D); ents.append(ent)
             entry.update(entropy=ent, ratio=ratio); log(**entry)
             if args.reset_adam: opt = mk_opt()
             rnd += 1; r_steps, r_loss = 0, 0.0
-            next_round = (int((time.perf_counter() - t0) / slice_s) + 1) * slice_s
+            next_round = warm + (int((time.perf_counter() - t0 - warm) / slice_s) + 1) * slice_s
             continue
         # ---- one training step
         for g in opt.param_groups: g["lr"] = lr_at(el / args.budget_s, args.lr)
         b = sampler.next(); xb, yb = X[b], Y[b]
-        sk, bk = mask_bools(mask), None
+        sk, bk = cands[mask]
         if arm == "stochdepth":
             ps = torch.tensor([args.sd_skip_p] * N_SKIPS)
             pb = torch.tensor([args.sd_block_p * (l + 1) / N_BLOCKS for l in range(N_BLOCKS)])
-            sk = ((torch.rand(N_SKIPS, generator=gen) >= ps).float() / (1 - ps)).tolist()
+            kp = args.drop_mode in ("rescale", "learned")  # these need binary 0/1 skip masks, not 1/(1-p) scaling
+            sk = ((torch.rand(N_SKIPS, generator=gen) >= ps).float() / (1 if kp else 1 - ps)).tolist()
             bk = ((torch.rand(N_BLOCKS, generator=gen) >= pb).float() / (1 - pb)).tolist()
         track = args.log_grad_norms and step % args.log_grad_norms == 0
         model.track_grads = bool(track)
-        mse = ((model(xb, skip_mask=sk, block_mask=bk) - yb) ** 2).flatten(1).mean(1)
-        loss = (D[b] * mse).mean()
+        se = (model(xb, skip_mask=sk, block_mask=bk) - yb) ** 2
+        if args.rw_on == "heldout": loss = se.mean()  # D only weights the mask score S
+        elif args.weight_mode == "pixel": loss = (D.view(1, *se.shape[1:]) * se).mean()
+        else: loss = (D[b] * se.flatten(1).mean(1)).mean()
         if not torch.isfinite(loss): diverged = True; break
         opt.zero_grad(set_to_none=True); loss.backward()
         if track:
@@ -313,7 +426,10 @@ def main(args):
 
     # ---- final evals (outside budget; unmasked final weights)
     fin = run_eval(model, name, "val")
-    log(type="final", split="val", steps=step, wall=wall, diverged=diverged, **{k: fin[k] for k in ("metric", "onestep_mse", "per_step_nrmse")})
+    ens = {}
+    if args.ensemble_topk:  # analysis only: does not change the reported metric
+        ens = ensemble_eval(model, name, calib, args.ensemble_topk)
+    log(type="final", split="val", steps=step, wall=wall, diverged=diverged, **{k: fin[k] for k in ("metric", "onestep_mse", "per_step_nrmse")}, **ens)
     test = run_eval(model, name, "test") if args.eval_test else None
     if test: log(type="final", split="test", **{k: test[k] for k in ("metric", "onestep_mse", "per_step_nrmse")})
     torch.save(model.state_dict(), run_dir / "model.pt")
@@ -325,11 +441,15 @@ def main(args):
     if use_rw:
         notes.append(f"minH={min(ents):.3f}")
         if ents[-1] < 0.8: notes.append(f"ENTROPY_WARN(final={ents[-1]:.3f})")
+    if ens: notes.append(f"ens_metric={ens['ens_metric']:.5g};ens_masks={'/'.join(map(str, ens['ens_masks']))}")
     if diverged: notes.append("DIVERGED")
     if not math.isfinite(fin["metric"]): notes.append("NONFINITE_ROLLOUT")
     if test: notes.append(f"test_metric={test['metric']:.5g};test_onestep={test['onestep_mse']:.5g}")
     extra = [f"{k}={getattr(args, k)}" for k, d in (("mask_rule", "argmax"), ("score_on", "train"), ("lam", 0.3), ("clamp_ratio", 5.0),
-             ("drop_mode", "zero"), ("lr", 1e-3), ("width", 10), ("reset_adam", False)) if getattr(args, k) != d]
+             ("drop_mode", "zero"), ("lr", 1e-3), ("width", 10), ("reset_adam", False),
+             ("rw_norm", "max"), ("beta_cap", 1.0), ("rw_sq", False), ("rw_on", "train"), ("norepeat", 0), ("mask_exclude_all_drop", False),
+             ("mask_score_hiw", 0.0), ("mask_target", "skips"), ("weight_mode", "sample"), ("warm_frac", 0.0),
+             ("ensemble_topk", 0), ("rw_rollout", 1), ("n_rounds", 30), ("score_n", 128), ("mask_temp", 1.0)) if getattr(args, k) != d]
     append_row(out / "results.tsv", [commit, name, arm, args.n_train, args.seed, f"{fin['metric']:.6g}", f"{fin['onestep_mse']:.6g}",
                                     f"{wall:.1f}", " ".join(notes + extra)])
     print(f"{tag}: metric={fin['metric']:.5g} onestep={fin['onestep_mse']:.5g} steps={step} rounds={rnd} {' '.join(notes)}")

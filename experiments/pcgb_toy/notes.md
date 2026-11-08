@@ -99,9 +99,30 @@ Val metric: KS1D 0.061 (still improving), Kolmo2D 0.73 (best 0.64 @1k steps, the
 Phase 2 keep threshold on ks1d n=512: 2× std ≈ 0.008 (using the larger of incumbent/baseline std).
 Kolmo2D at n=128 is *worse than persistence* (overfits badly in 12 min).
 
-## Phase 1 — main table
+## Phase 1 — main table (v1 defaults, val metric = 10-step rollout nRMSE, mean ± std over 3 seeds)
 
-_Running (jobs/phase1.txt, 47 runs)._
+| arm | ks1d n=512 | ks1d n=2048 | kolmo2d n=512 | kolmo2d n=2048 |
+|---|---|---|---|---|
+| baseline | **0.060 ± 0.004** | **0.025 ± 0.003** | 0.741 ± 0.028 | 0.528 ± 0.014 |
+| stochdepth | 0.218 ± 0.015 | 0.234 ± 0.031 | **0.530 ± 0.012** | **0.496 ± 0.005** |
+| mask_only | 0.506 ± 0.035 | 0.691 ± 0.057 | 0.905 ± 0.110 | 1.077 ± 0.196 |
+| reweight_only | 0.061 ± 0.004 | 0.026 ± 0.003 | 0.743 ± 0.031 | 0.527 ± 0.007 |
+| pcgb | 0.619 ± 0.065 | 0.587 ± 0.042 | 0.924 ± 0.093 | 1.008 ± 0.128 |
+
+- No arm hit the 70% mask-collapse flag, but argmax picks mask 0 (all skips dropped) 34–47% of rounds and
+  oscillates 0 ↔ 15/14 on ks1d (0 ↔ 8/12 on kolmo2d). Weights never moved (β=1) → reweight_only ≡ baseline and
+  pcgb ≡ mask_only within noise (a useful internal consistency check).
+- **Masking (v1) is catastrophic**: ×8–27 worse on ks1d, ×1.2–2 worse on kolmo2d, and gets *worse* with more data.
+- **Random stochastic depth** splits by regime: −28% (n=512) / −6% (n=2048) on overfitting-limited Kolmo2D,
+  ×3.6–9 worse on co-adapted KS1D. Its benefit on Kolmo shrinks with n → it acts as a regulariser.
+- Phase 2 starts from incumbent = pcgb v1 on ks1d n=512 (0.619 ± 0.065); the bar to beat overall is the baseline.
+
+## Phase 2 — protocol
+
+All Phase 2 options were implemented once as flags (defaults = v1, verified bit-identical with a fake clock).
+Each experiment = ONE flag change on top of the incumbent config; "keep" = adopt the flag into the incumbent;
+"revert" = drop it. Independent single-flag experiments vs the same incumbent are screened as a batch, then
+keepers are combined one at a time.
 
 ## Phase 2 — loop log
 
