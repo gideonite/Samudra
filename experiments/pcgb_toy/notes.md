@@ -89,9 +89,19 @@ Val metric: KS1D 0.061 (still improving), Kolmo2D 0.73 (best 0.64 @1k steps, the
   n=512, not gradient starvation. Little room for PCGB as specified; Phase 1 run anyway (as v1, reweight no-op
   included — that is part of the answer).
 
+### Baseline seed-noise bar (val metric, mean ± std over 3 seeds)
+
+| dataset | n=128 | n=512 | n=2048 | persistence |
+|---|---|---|---|---|
+| ks1d | 0.205 ± 0.026 | 0.060 ± 0.004 | 0.025 ± 0.003 | 1.14 |
+| kolmo2d | 1.140 ± 0.034 | 0.741 ± 0.028 | 0.528 ± 0.014 | 1.03 |
+
+Phase 2 keep threshold on ks1d n=512: 2× std ≈ 0.008 (using the larger of incumbent/baseline std).
+Kolmo2D at n=128 is *worse than persistence* (overfits badly in 12 min).
+
 ## Phase 1 — main table
 
-_TBD_
+_Running (jobs/phase1.txt, 47 runs)._
 
 ## Phase 2 — loop log
 

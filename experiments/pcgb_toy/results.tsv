@@ -8,3 +8,14 @@ f5d18a7	ks1d	baseline	128	1	0.208678	0.000962278	720.1	rounds=29 steps=11758 ste
 61a7986	ks1d	baseline	128	2	0.22849	0.000942758	720.0	rounds=29 steps=12638 steps_per_s=17.6 params=234571
 61a7986	ks1d	baseline	512	1	0.0558763	6.27975e-05	720.0	rounds=29 steps=12693 steps_per_s=17.6 params=234571
 61a7986	ks1d	baseline	512	2	0.0634497	6.96807e-05	720.0	rounds=29 steps=12539 steps_per_s=17.4 params=234571
+1a864ce	ks1d	baseline	2048	0	0.0226507	1.03837e-05	720.0	rounds=29 steps=12521 steps_per_s=17.4 params=234571
+1a864ce	ks1d	baseline	2048	1	0.0262277	1.00469e-05	720.0	rounds=29 steps=12595 steps_per_s=17.5 params=234571
+1a864ce	ks1d	baseline	2048	2	0.0273649	9.88969e-06	720.0	rounds=29 steps=12676 steps_per_s=17.6 params=234571
+f06f258	kolmo2d	baseline	128	0	1.17316	0.223184	720.2	rounds=29 steps=3073 steps_per_s=4.3 params=262851
+f06f258	kolmo2d	baseline	128	1	1.1061	0.217685	720.2	rounds=29 steps=3066 steps_per_s=4.3 params=262851
+f06f258	kolmo2d	baseline	128	2	1.14133	0.220839	720.1	rounds=29 steps=3073 steps_per_s=4.3 params=262851
+f06f258	kolmo2d	baseline	512	1	0.771453	0.0545436	720.0	rounds=29 steps=3054 steps_per_s=4.2 params=262851
+f06f258	kolmo2d	baseline	512	2	0.718305	0.0507753	720.0	rounds=29 steps=3057 steps_per_s=4.2 params=262851
+f06f258	kolmo2d	baseline	2048	0	0.524772	0.0322561	720.2	rounds=29 steps=3027 steps_per_s=4.2 params=262851
+f06f258	kolmo2d	baseline	2048	1	0.543393	0.03303	720.0	rounds=29 steps=3020 steps_per_s=4.2 params=262851
+f06f258	kolmo2d	baseline	2048	2	0.515362	0.0320068	720.0	rounds=29 steps=3063 steps_per_s=4.3 params=262851
