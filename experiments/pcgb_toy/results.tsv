@@ -188,3 +188,6 @@ a23fe91	grayscott2d	pcgb	512	2	0.696753	0.0456397	720.2	rounds=29 steps=2628 ste
 c43f057	ks1d	stochdepth	512	0	0.478133	0.00201437	7200.0	rounds=29 steps=157359 steps_per_s=21.9 params=234571
 c43f057	ks1d	baseline	512	0	0.0614955	6.06838e-05	7200.0	rounds=29 steps=151790 steps_per_s=21.1 params=234571
 c43f057	ks1d	pcgb	512	0	0.331235	0.00325249	7200.0	rounds=299 steps=151850 steps_per_s=21.1 params=234571 minH=1.000 n_rounds=300
+c43f057	ks1d	baseline	512	1	0.0442808	4.27058e-05	7200.0	rounds=29 steps=152309 steps_per_s=21.2 params=234571
+c43f057	ks1d	stochdepth	512	1	0.32263	0.00356864	7200.0	rounds=29 steps=160214 steps_per_s=22.3 params=234571
+c43f057	ks1d	pcgb	512	1	0.346437	0.00368122	7200.0	rounds=299 steps=154635 steps_per_s=21.5 params=234571 minH=1.000 n_rounds=300
