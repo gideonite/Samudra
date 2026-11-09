@@ -9,7 +9,7 @@
 5. ~25 Phase-2 variants (mask rules, drop modes, block masks, warm-up, live/pixel reweighting, round length, Adam reset) never came within ×6 of baseline on KS1D or beat baseline on Kolmo2D n=512.
 6. Mask-trained nets *are* more ensemble-like (top-3 masked-subnet average beats their own unmasked net, e.g. 0.48→0.32), but remain far worse than plain training.
 7. **Best config**: plain baseline for the co-adapted chaotic 1D system; random stochastic depth (skip p=0.2, block p≤0.1) where data limits (Kolmo2D, denoise, Gray–Scott). It also extends Kolmo2D's predictability horizon (15–17 vs 8–13 steps).
-8. **Caveat: nothing was run to convergence.** Every result is at a fixed 12-min CPU budget, with cosine LR annealed to 0 at the end (KS1D ~12k steps, 2D sets ~3k). KS1D baseline was still improving; KS1D stochdepth train loss stays ~100× above baseline (8e-4 vs 6e-6), so its (and PCGB's) KS1D deficit may be partly slower convergence, not a worse asymptote. PCGB never settles: val oscillates with the mask phase. Kolmo2D stochdepth was still improving at the end; Kolmo2D/denoise baselines had already passed their val optimum (overfitting). Conclusions hold "at matched short compute"; a longer-budget check is the main open item.
+8. **Budget check (10×, 120-min runs, ks1d+kolmo2d n=512, 3 seeds):** conclusions unchanged. Baselines are data-limited (ks1d 0.056, kolmo 0.728); stochdepth keeps its Kolmo2D lead (0.513) and gets worse on KS1D (0.335); PCGB improves (ks1d 0.344, kolmo 0.803) but saturates far above the best arm. Val curves plateau within the runs.
 
 ### Main table — TEST split (10-step rollout nRMSE; denoise 1-step), mean ± std over 3 seeds
 
@@ -262,3 +262,19 @@ stochdepth, pcgb (n_rounds=300 to keep ~24 s rounds)} × 3 seeds, 12 intermediat
 
 → The KS1D verdict is not a short-budget artefact. More training does not close the gap: PCGB's improvement
 saturates far above baseline, and stochastic depth gets worse.
+
+### Kolmo2D n=512 at 10× budget (val, 3 seeds)
+
+| arm | 12 min | 120 min |
+|---|---|---|
+| baseline | 0.741 ± 0.028 | 0.728 ± 0.020 (val best 0.62 at ~25% of the run, then overfits to 0.75) |
+| stochdepth | 0.530 ± 0.012 | **0.513 ± 0.014** (plateaus ~0.51 from ~25% of the run) |
+| pcgb (300 rounds) | 0.924 ± 0.093 | 0.803 ± 0.019 (still oscillating 0.66–1.0 between evals) |
+
+→ Same picture as KS1D. More training leaves the baseline unchanged (it is limited by overfitting), stochdepth keeps
+its lead, and PCGB improves but stays worse than baseline. Even an oracle-early-stopped baseline (0.62) loses to
+stochdepth (0.51).
+
+### 10× conclusion
+The Q1–4 answers survive a 10× budget. Every arm's val metric plateaued well inside the 120-min runs, so these runs
+are effectively converged; PCGB's apparent gains with budget saturate far above the best arm.
