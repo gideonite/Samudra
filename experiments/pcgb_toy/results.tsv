@@ -197,3 +197,6 @@ a819fa6	ks1d	pcgb	512	2	0.355208	0.00398006	7200.0	rounds=299 steps=155484 steps
 06ff2ed	kolmo2d	baseline	512	0	0.751509	0.109748	7200.0	rounds=29 steps=35608 steps_per_s=4.9 params=262851
 06ff2ed	kolmo2d	stochdepth	512	0	0.516079	0.0383595	7200.1	rounds=29 steps=37290 steps_per_s=5.2 params=262851
 06ff2ed	kolmo2d	pcgb	512	0	0.801632	0.0904074	7200.1	rounds=299 steps=33971 steps_per_s=4.7 params=262851 minH=1.000 n_rounds=300
+c8e945a	kolmo2d	baseline	512	1	0.720265	0.107813	7200.0	rounds=29 steps=35688 steps_per_s=5.0 params=262851
+c8e945a	kolmo2d	stochdepth	512	1	0.497757	0.0373957	7200.1	rounds=29 steps=37450 steps_per_s=5.2 params=262851
+c8e945a	kolmo2d	pcgb	512	1	0.822219	0.0819001	7200.0	rounds=299 steps=34263 steps_per_s=4.8 params=262851 minH=1.000 n_rounds=300
