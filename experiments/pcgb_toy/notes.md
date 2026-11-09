@@ -251,3 +251,14 @@ answered cleanly, and further PCGB tuning has shown no trend toward baseline.
 Narrowed to the open question "do the gaps close with more training?": ks1d and kolmo2d at n=512 × {baseline,
 stochdepth, pcgb (n_rounds=300 to keep ~24 s rounds)} × 3 seeds, 12 intermediate evals. Same profile (3 concurrent
 1-thread jobs). Dropped reweight_only (inert by construction), denoise/grayscott and the other PCGB variants.
+
+### KS1D n=512 at 10× budget (val, 3 seeds)
+
+| arm | 12 min | 120 min | Δ |
+|---|---|---|---|
+| baseline | 0.060 ± 0.004 | 0.056 ± 0.010 | ≈ same: data-limited; val plateaus from ~50% of the run while train loss → 2e-8 |
+| stochdepth | 0.218 ± 0.015 | 0.335 ± 0.138 | worse, high variance (0.48 / 0.32 / 0.20); val drifts up late in training |
+| pcgb (300 rounds) | 0.619 ± 0.065 | 0.344 ± 0.012 | better: mask oscillation damps; still ×6 worse than baseline |
+
+→ The KS1D verdict is not a short-budget artefact. More training does not close the gap: PCGB's improvement
+saturates far above baseline, and stochastic depth gets worse.
