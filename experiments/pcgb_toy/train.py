@@ -26,7 +26,7 @@ import torch.nn.functional as F
 import prepare
 
 HERE = Path(__file__).resolve().parent
-ARMS = ["baseline", "stochdepth", "mask_only", "reweight_only", "pcgb"]
+ARMS = ["baseline", "stochdepth", "mask_only", "reweight_only", "pcgb", "gboost"]
 N_SKIPS, N_BLOCKS = 4, 10
 
 
@@ -163,6 +163,26 @@ def reweight(D, idx, e, lam=0.3, ratio=5.0, norm="max", beta_cap=1.0, sq=False):
     return D / D.mean(), Lbar, beta
 
 
+def reweight_gb(D, idx, e, lam=0.3, ratio=5.0, norm="max"):
+    """Gradient-boosting-style sample weighting (--rw_kind gb), no beta gate (always live). For squared loss the functional
+    gradient of sample i is its residual, so emphasis follows gradient magnitude: t_i = e_i / mean_j(e_j) with e_i the
+    pixel-mean squared residual, D_i <- (1-lam) D_i + lam t_i on the scored subset, then the same median clamp + mean-1 as
+    reweight(). Returns (D, Lbar, nan); Lbar = D-weighted mean normalised error (same definition as reweight, for logging)."""
+    d = D[idx]
+    t = e / e.mean().clamp_min(1e-30)
+    r = e.sqrt()
+    if norm == "max": L = r / r.max().clamp_min(1e-12)
+    elif norm == "p95": L = (r / torch.quantile(r, 0.95).clamp_min(1e-12)).clamp(max=1.0)
+    elif norm == "rank": L = (r.argsort().argsort().float() + 1) / len(r)
+    else: raise ValueError(norm)
+    Lbar = float(((d / d.sum()) * L).sum())
+    D = D.clone()
+    D[idx] = (1 - lam) * d + lam * t
+    med = D.median()
+    D = D.clamp(med / math.sqrt(ratio), med * math.sqrt(ratio))
+    return D / D.mean(), Lbar, float("nan")
+
+
 @torch.no_grad()
 def score_round(model, args, pools, D, rnd, cands):
     """Returns (idx, e, S[len(cands)] or None): idx indexes D, e = mean squared residual of the unmasked net per D entry
@@ -296,6 +316,105 @@ def build_model(meta, width=10, drop_mode="zero"):
     return UNet(meta, width, drop_mode)
 
 
+def count_params(meta, width, drop_mode="zero"):
+    return sum(p.numel() for p in build_model(meta, width, drop_mode).parameters())
+
+
+def run_gboost(args, meta, X, Y, run_dir, log, commit, tag):
+    """Functional gradient boosting, K stages, each a UNet from the same constructor, each trained budget/K wall-clock seconds.
+    Stage 1 fits y (full UNet output, which already contains the x + head residual form). Stage k>1 fits r_k = y - F_{k-1}(x)
+    with F_{k-1} frozen; since the UNet adds x internally, a stage k>1 outputs head-only h_k(x) = model(x) - x so that it can
+    represent a small correction. F_K(x) = h_1(x) + nu * sum_{k>=2} h_k(x). Same AdamW, loss (mse), cosine LR (per stage), clip.
+    F_{k-1}(X) over the (fixed, small) train set is computed once per stage under no_grad and cached (identical to recomputing)."""
+    K = args.gb_stages
+    p_base = count_params(meta, args.width, args.drop_mode)
+    if args.gb_width > 0: w = args.gb_width
+    else: w = min(range(2, 4 * args.width + 1), key=lambda c: abs(K * count_params(meta, c, args.drop_mode) - p_base))
+    p_stage = count_params(meta, w, args.drop_mode); p_tot = K * p_stage
+    print(f"gboost: K={K} stage_width={w} params/stage={p_stage} total={p_tot} baseline(width={args.width})={p_base} "
+          f"ratio={p_tot / p_base:.3f}", flush=True)
+    if abs(p_tot / p_base - 1) > 0.15: print("WARNING: total params differ from baseline by >15%", flush=True)
+    torch.manual_seed(args.seed)
+    stages = [build_model(meta, w, args.drop_mode).train() for _ in range(K)]
+    n, bs = len(X), min(args.bs, len(X))
+    sampler = Sampler(n, bs, args.seed)
+    log(type="config", **vars(args), n_params=p_tot, stage_width=w, params_per_stage=p_stage, base_params=p_base, commit=commit)
+    (run_dir / "args.json").write_text(json.dumps({**vars(args), "n_params": p_tot, "stage_width": w, "meta_ndim": meta["ndim"]}))
+
+    def h(k, x):  # contribution of stage k (0-based) incl. shrinkage
+        return stages[k](x) if k == 0 else args.gb_nu * (stages[k](x) - x)
+
+    def F(x, upto):  # F over stages 0..upto inclusive
+        return sum(h(k, x) for k in range(upto + 1))
+
+    def mk_fn(upto):
+        def fn(x):
+            for m in stages[: upto + 1]: m.eval()
+            with torch.no_grad(): out = F(x, upto)
+            for m in stages[: upto + 1]: m.train()
+            return out
+        return fn
+    seg = args.budget_s / K
+    eval_s = args.budget_s / args.n_evals
+    next_eval = eval_s
+    curve, stage_info, diverged, step = [], [], False, 0
+    t0 = time.perf_counter()
+    for k in range(K):
+        m = stages[k]; m.train()
+        opt = torch.optim.AdamW(m.parameters(), lr=args.lr, weight_decay=args.wd)
+        with torch.no_grad():
+            for s_ in stages[:k]: s_.eval()
+            Fprev = F(X, k - 1) if k > 0 else torch.zeros_like(Y)
+            for s_ in stages[:k]: s_.train()
+        T = Y - Fprev  # residual target (frozen F_{k-1})
+        tvar = float((T ** 2).mean())
+        t_start, t_end = k * seg, (k + 1) * seg
+        losses, ssteps = [], 0
+        while True:
+            el = time.perf_counter() - t0
+            if el >= t_end: break
+            if el >= next_eval and len(curve) < args.n_evals - 1:  # intermediate val evals, counted in budget (as in other arms)
+                ev = prepare.evaluate(mk_fn(k), args.dataset, split="val"); curve.append(ev["metric"])
+                log(type="eval", step=step, elapsed=time.perf_counter() - t0, metric=ev["metric"], onestep_mse=ev["onestep_mse"], stage=k)
+                next_eval += eval_s; continue
+            for g in opt.param_groups: g["lr"] = lr_at((el - t_start) / seg, args.lr)
+            b = sampler.next(); xb = X[b]
+            out = m(xb) if k == 0 else m(xb) - xb
+            loss = ((out - T[b]) ** 2).mean()
+            if not torch.isfinite(loss): diverged = True; break
+            opt.zero_grad(set_to_none=True); loss.backward()
+            if args.clip > 0: nn.utils.clip_grad_norm_(m.parameters(), args.clip)
+            opt.step(); step += 1; ssteps += 1; losses.append(loss.item())
+        if diverged: break
+        with torch.no_grad():
+            m.eval(); hk = (m(X) if k == 0 else args.gb_nu * (m(X) - X)); m.train()
+            full_mse = float(((Fprev + hk - Y) ** 2).mean())  # train mse of F_k on the whole train set
+        tail = losses[-max(len(losses) // 10, 1):]
+        info = dict(stage=k + 1, steps=ssteps, target_var=tvar, final_train_loss=sum(tail) / len(tail), train_mse_F=full_mse)
+        stage_info.append(info); log(type="stage", **info)
+    wall = time.perf_counter() - t0
+    upto = len(stage_info) - 1
+    fin = prepare.evaluate(mk_fn(upto), args.dataset, split="val")
+    stage_val = []
+    if not diverged:  # analysis only: val metric of F_k for each k
+        stage_val = [prepare.evaluate(mk_fn(k), args.dataset, split="val")["metric"] for k in range(K)]
+    log(type="final", split="val", steps=step, wall=wall, diverged=diverged, stage_val=stage_val,
+        **{kk: fin[kk] for kk in ("metric", "onestep_mse", "per_step_nrmse")})
+    test = None
+    if args.eval_test:
+        test = prepare.evaluate(mk_fn(upto), args.dataset, split="test")
+        log(type="final", split="test", **{kk: test[kk] for kk in ("metric", "onestep_mse", "per_step_nrmse")})
+    torch.save([s_.state_dict() for s_ in stages], run_dir / "model.pt")
+    notes = [f"steps={step}", f"steps_per_s={step / max(wall, 1e-9):.1f}", f"params={p_tot}", f"stages={K}", f"stage_width={w}",
+             "stage_loss=" + "/".join(f"{i['final_train_loss']:.3g}" for i in stage_info),
+             "stage_tvar=" + "/".join(f"{i['target_var']:.3g}" for i in stage_info),
+             "stage_val=" + "/".join(f"{v:.3g}" for v in stage_val)]
+    if diverged: notes.append("DIVERGED")
+    if not math.isfinite(fin["metric"]): notes.append("NONFINITE_ROLLOUT")
+    if test: notes.append(f"test_metric={test['metric']:.5g};test_onestep={test['onestep_mse']:.5g}")
+    return fin, wall, notes, step, diverged
+
+
 # ----------------------------------------------------------------------------- main
 def get_args(argv=None):
     p = argparse.ArgumentParser()
@@ -330,6 +449,11 @@ def get_args(argv=None):
     p.add_argument("--weight_mode", choices=["sample", "pixel"], default="sample")
     p.add_argument("--warm_frac", type=float, default=0.0, help="first F of the budget = plain training, then n_rounds PCGB rounds")
     p.add_argument("--ensemble_topk", type=int, default=0, help="after training: also eval avg of the K lowest-S masked nets")
+    p.add_argument("--rw_kind", choices=["adaboost", "gb"], default="adaboost",
+                   help="adaboost = AdaBoost.R2 (beta-gated); gb = gradient-boosting-style D <- (1-lam)D + lam*e/mean(e), always live")
+    p.add_argument("--gb_stages", type=int, default=4, help="gboost arm: number of stages K (each budget/K seconds)")
+    p.add_argument("--gb_width", type=int, default=0, help="gboost arm: stage width (0 = auto: K stages' params ~ baseline params)")
+    p.add_argument("--gb_nu", type=float, default=1.0, help="gboost arm: shrinkage for stages >= 2 (stage 1 has weight 1)")
     p.add_argument("--rw_rollout", type=int, default=1, help="H-step rollout residuals for reweighting (1 = one-step, v1)")
     return p.parse_args(argv)
 
@@ -349,6 +473,15 @@ def main(args):
     meta = prepare.load(name)["meta"]
     X, Y = prepare.get_train_pairs(name, args.n_train, args.seed)
     calib = prepare.get_calib_pairs(name, 256, 0)
+    if args.rw_kind == "gb" and args.weight_mode == "pixel": raise ValueError("--rw_kind gb is sample-mode only (no pixel mode)")
+    if arm == "gboost":
+        fin, wall, notes, step, diverged = run_gboost(args, meta, X, Y, run_dir, log, commit, tag)
+        extra = [f"{k}={getattr(args, k)}" for k, d in (("gb_stages", 4), ("gb_width", 0), ("gb_nu", 1.0), ("lr", 1e-3)) if getattr(args, k) != d]
+        append_row(Path(args.out_dir) / "results.tsv", [commit, name, arm, args.n_train, args.seed, f"{fin['metric']:.6g}",
+                   f"{fin['onestep_mse']:.6g}", f"{wall:.1f}", " ".join(notes + extra)])
+        print(f"{tag}: metric={fin['metric']:.5g} onestep={fin['onestep_mse']:.5g} steps={step} {' '.join(notes)}")
+        if diverged: sys.exit(1)
+        return
     if args.mask_exclude_all_drop and args.mask_target == "blocks": raise ValueError("blocks target has no all-drop candidate")
     cands = make_cands(args.mask_target)
     pools = {"train": (X, Y, None), "calib": (*calib, None)}
@@ -371,7 +504,7 @@ def main(args):
     slice_s, eval_s = (args.budget_s - warm) / args.n_rounds, args.budget_s / args.n_evals
     next_round, next_eval = warm + slice_s, eval_s
     step = rnd = r_steps = 0; r_loss = 0.0
-    masks, ents, diverged, curve = [], [], False, []
+    masks, ents, ratios, diverged, curve = [], [], [], False, []
     t0 = time.perf_counter()
     while True:
         el = time.perf_counter() - t0
@@ -386,8 +519,9 @@ def main(args):
             if use_mask or use_rw:
                 idx, e, S = score_round(model, args, pools, D, rnd, cands)
                 if use_rw:
-                    D, Lbar, beta = reweight(D, idx, e, args.lam, args.clamp_ratio, args.rw_norm, args.beta_cap, args.rw_sq)
-                    entry.update(Lbar=Lbar, beta=beta)
+                    if args.rw_kind == "gb": D, Lbar, beta = reweight_gb(D, idx, e, args.lam, args.clamp_ratio, args.rw_norm)
+                    else: D, Lbar, beta = reweight(D, idx, e, args.lam, args.clamp_ratio, args.rw_norm, args.beta_cap, args.rw_sq)
+                    entry.update(Lbar=Lbar, beta=beta, D_max=float(D.max()), D_min=float(D.min()))
                 if use_mask:
                     mask = select_mask(S, args.mask_rule, rng, rnd, args.mask_temp, (0,) * args.mask_exclude_all_drop,
                                        hist[-args.norepeat:] if args.norepeat else ())
@@ -395,7 +529,7 @@ def main(args):
                     entry.update(S=S.tolist(), keep_rank=int((S > S[cands.keep]).sum()) + 1, next_name=cands.names[mask])
                 masks.append(mask)
                 entry["next_mask"] = mask; entry["score_s"] = time.perf_counter() - t0 - el
-            ent, ratio = weight_stats(D); ents.append(ent)
+            ent, ratio = weight_stats(D); ents.append(ent); ratios.append(ratio)
             entry.update(entropy=ent, ratio=ratio); log(**entry)
             if args.reset_adam: opt = mk_opt()
             rnd += 1; r_steps, r_loss = 0, 0.0
@@ -444,6 +578,7 @@ def main(args):
         if use_mask and masks.count(top) / len(masks) > 0.7: notes.append(f"MASK_COLLAPSE(m={top},{masks.count(top)}/{len(masks)})")
     if use_rw:
         notes.append(f"minH={min(ents):.3f}")
+        if args.rw_kind == "gb": notes.append(f"D_ratio_max={max(ratios):.2f}"); notes.append(f"D_ratio_final={ratios[-1]:.2f}")
         if ents[-1] < 0.8: notes.append(f"ENTROPY_WARN(final={ents[-1]:.3f})")
     if ens: notes.append(f"ens_metric={ens['ens_metric']:.5g};ens_masks={'/'.join(map(str, ens['ens_masks']))}")
     if diverged: notes.append("DIVERGED")
@@ -453,7 +588,7 @@ def main(args):
              ("drop_mode", "zero"), ("lr", 1e-3), ("width", 10), ("reset_adam", False),
              ("rw_norm", "max"), ("beta_cap", 1.0), ("rw_sq", False), ("rw_on", "train"), ("norepeat", 0), ("mask_exclude_all_drop", False),
              ("mask_score_hiw", 0.0), ("mask_target", "skips"), ("weight_mode", "sample"), ("warm_frac", 0.0),
-             ("ensemble_topk", 0), ("rw_rollout", 1), ("n_rounds", 30), ("score_n", 128), ("mask_temp", 1.0)) if getattr(args, k) != d]
+             ("ensemble_topk", 0), ("rw_rollout", 1), ("rw_kind", "adaboost"), ("gb_stages", 4), ("gb_width", 0), ("gb_nu", 1.0), ("n_rounds", 30), ("score_n", 128), ("mask_temp", 1.0)) if getattr(args, k) != d]
     append_row(out / "results.tsv", [commit, name, arm, args.n_train, args.seed, f"{fin['metric']:.6g}", f"{fin['onestep_mse']:.6g}",
                                     f"{wall:.1f}", " ".join(notes + extra)])
     print(f"{tag}: metric={fin['metric']:.5g} onestep={fin['onestep_mse']:.5g} steps={step} rounds={rnd} {' '.join(notes)}")
