@@ -278,3 +278,10 @@ stochdepth (0.51).
 ### 10× conclusion
 The Q1–4 answers survive a 10× budget. Every arm's val metric plateaued well inside the 120-min runs, so these runs
 are effectively converged; PCGB's apparent gains with budget saturate far above the best arm.
+
+## Write-up
+Claude doc (paper tab + plain-language summary tab): https://claude.ai/artifact/UXKrHZ8hZzcNhP5fK4duWT
+Figures from paper_figs.py and example_figs.py. Corrections found while writing it up:
+- Gray–Scott reweighting is *not* inert (L̄ < 0.5 in 90% of rounds, min β 0.18), yet still neutral (test 0.671 vs
+  baseline 0.664). KS1D has β < 1 in 3.8% of rounds; Kolmo2D and denoise never do.
+- Phase 2 had 21 distinct traceable configurations, not ~25.
