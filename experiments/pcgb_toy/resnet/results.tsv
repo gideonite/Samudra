@@ -1,0 +1,13 @@
+commit	dataset	arm	n_train	seed	metric	onestep_mse	wallclock_s	notes
+24d0636	ks1d	baseline	512	0	0.0375905	1.1409e-05	720.1	rounds=29 steps=3854 steps_per_s=5.4 params=230065 arch=resnet
+24d0636	denoise	baseline	512	0	0.149754	0.0224262	720.9	rounds=29 steps=324 steps_per_s=0.4 params=260351 arch=resnet
+24d0636	kolmo2d	baseline	512	0	0.5649	0.0310314	720.9	rounds=29 steps=284 steps_per_s=0.4 params=260351 arch=resnet
+24d0636	grayscott2d	baseline	512	0	0.754426	0.0550733	720.9	rounds=29 steps=278 steps_per_s=0.4 params=260852 arch=resnet
+24d0636	ks1d	baseline	512	1	0.0390599	1.40027e-05	720.1	rounds=29 steps=3807 steps_per_s=5.3 params=230065 arch=resnet
+24d0636	kolmo2d	baseline	512	1	0.574178	0.0336811	720.8	rounds=29 steps=278 steps_per_s=0.4 params=260351 arch=resnet
+24d0636	denoise	baseline	512	1	0.150441	0.0226324	721.0	rounds=29 steps=324 steps_per_s=0.4 params=260351 arch=resnet
+24d0636	grayscott2d	baseline	512	1	0.644756	0.0352444	720.2	rounds=29 steps=279 steps_per_s=0.4 params=260852 arch=resnet
+24d0636	ks1d	baseline	512	2	0.0411404	1.64357e-05	720.1	rounds=29 steps=3799 steps_per_s=5.3 params=230065 arch=resnet
+24d0636	denoise	baseline	512	2	0.151662	0.0230013	721.3	rounds=29 steps=319 steps_per_s=0.4 params=260351 arch=resnet
+24d0636	kolmo2d	baseline	512	2	0.552416	0.0319438	720.5	rounds=29 steps=275 steps_per_s=0.4 params=260351 arch=resnet
+24d0636	grayscott2d	baseline	512	2	0.677726	0.0378435	720.3	rounds=29 steps=278 steps_per_s=0.4 params=260852 arch=resnet
