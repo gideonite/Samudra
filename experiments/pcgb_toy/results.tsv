@@ -203,3 +203,39 @@ c8e945a	kolmo2d	pcgb	512	1	0.822219	0.0819001	7200.0	rounds=299 steps=34263 step
 8a7f585	kolmo2d	baseline	512	2	0.713132	0.10002	7200.2	rounds=29 steps=34811 steps_per_s=4.8 params=262851
 8a7f585	kolmo2d	stochdepth	512	2	0.526225	0.039608	7200.0	rounds=29 steps=36258 steps_per_s=5.0 params=262851
 8a7f585	kolmo2d	pcgb	512	2	0.783546	0.0931436	7200.2	rounds=299 steps=33054 steps_per_s=4.6 params=262851 minH=1.000 n_rounds=300
+da88b5f	ks1d	reweight_only	512	0	0.0624112	5.6723e-05	720.0	rounds=29 steps=12933 steps_per_s=18.0 params=234571 minH=0.998 D_ratio_max=2.61 D_ratio_final=2.37 rw_kind=gb
+da88b5f	ks1d	pcgb	512	0	0.554678	0.00529399	720.0	rounds=29 steps=12824 steps_per_s=17.8 params=234571 minH=0.998 D_ratio_max=3.44 D_ratio_final=3.44 rw_kind=gb
+da88b5f	ks1d	gboost	512	0	0.120085	0.000191901	720.1	steps=20189 steps_per_s=28.0 params=240844 stages=4 stage_width=5 stage_loss=6.65e-05/7.31e-06/6.89e-06/6.27e-06 stage_tvar=1/6.61e-05/7.29e-06/6.9e-06 stage_val=0.0983/0.12/0.12/0.12
+da88b5f	ks1d	gboost	512	0	0.0860668	8.08609e-05	720.2	steps=17305 steps_per_s=24.0 params=232514 stages=2 stage_width=7 stage_loss=1.64e-05/8.17e-07 stage_tvar=1/1.62e-05 stage_val=0.0747/0.0861 gb_stages=2
+da88b5f	ks1d	reweight_only	512	1	0.0559071	6.3296e-05	720.0	rounds=29 steps=13264 steps_per_s=18.4 params=234571 minH=0.999 D_ratio_max=2.73 D_ratio_final=2.13 rw_kind=gb
+da88b5f	ks1d	pcgb	512	1	0.479972	0.00453155	720.0	rounds=29 steps=12946 steps_per_s=18.0 params=234571 minH=0.998 D_ratio_max=3.58 D_ratio_final=3.05 rw_kind=gb
+da88b5f	ks1d	gboost	512	1	0.128627	0.000210904	720.1	steps=20661 steps_per_s=28.7 params=240844 stages=4 stage_width=5 stage_loss=8.34e-05/6.43e-06/6.11e-06/6.1e-06 stage_tvar=1/8.3e-05/6.41e-06/6.11e-06 stage_val=0.104/0.129/0.129/0.129
+da88b5f	ks1d	gboost	512	1	0.0865575	7.54539e-05	720.2	steps=17068 steps_per_s=23.7 params=232514 stages=2 stage_width=7 stage_loss=2.29e-05/7.51e-07 stage_tvar=1/2.27e-05 stage_val=0.0761/0.0866 gb_stages=2
+da88b5f	ks1d	reweight_only	512	2	0.062287	6.89943e-05	720.0	rounds=29 steps=13146 steps_per_s=18.3 params=234571 minH=0.998 D_ratio_max=2.34 D_ratio_final=2.16 rw_kind=gb
+da88b5f	ks1d	pcgb	512	2	0.630482	0.00683902	720.0	rounds=29 steps=12711 steps_per_s=17.7 params=234571 minH=0.998 D_ratio_max=2.95 D_ratio_final=2.59 rw_kind=gb
+da88b5f	ks1d	gboost	512	2	0.153311	0.000258836	720.1	steps=20473 steps_per_s=28.4 params=240844 stages=4 stage_width=5 stage_loss=0.000111/8.34e-06/7.99e-06/7.25e-06 stage_tvar=1.01/0.000111/8.33e-06/7.99e-06 stage_val=0.114/0.154/0.154/0.153
+da88b5f	ks1d	gboost	512	2	0.0741629	8.61761e-05	720.2	steps=16783 steps_per_s=23.3 params=232514 stages=2 stage_width=7 stage_loss=2.02e-05/4.7e-07 stage_tvar=1.01/2e-05 stage_val=0.0678/0.0742 gb_stages=2
+da88b5f	kolmo2d	reweight_only	512	0	0.748351	0.0515959	720.2	rounds=29 steps=3191 steps_per_s=4.4 params=262851 minH=0.996 D_ratio_max=3.33 D_ratio_final=3.33 rw_kind=gb
+da88b5f	kolmo2d	pcgb	512	0	0.915384	0.109923	720.1	rounds=29 steps=2999 steps_per_s=4.2 params=262851 minH=0.999 D_ratio_max=2.30 D_ratio_final=2.30 rw_kind=gb
+da88b5f	kolmo2d	gboost	512	0	0.789976	0.0868976	720.9	steps=5636 steps_per_s=7.8 params=276204 stages=4 stage_width=5 stage_loss=0.0682/0.0517/0.0413/0.0343 stage_tvar=1.02/0.0682/0.0517/0.0413 stage_val=0.734/0.752/0.78/0.79
+da88b5f	kolmo2d	reweight_only	512	1	0.764288	0.0536127	720.2	rounds=29 steps=3224 steps_per_s=4.5 params=262851 minH=0.996 D_ratio_max=3.30 D_ratio_final=3.30 rw_kind=gb
+da88b5f	kolmo2d	gboost	512	0	0.780365	0.0806852	721.0	steps=4417 steps_per_s=6.1 params=263202 stages=2 stage_width=7 stage_loss=0.0415/0.023 stage_tvar=1.02/0.0415 stage_val=0.756/0.78 gb_stages=2
+da88b5f	kolmo2d	pcgb	512	1	0.909848	0.146894	720.2	rounds=29 steps=2969 steps_per_s=4.1 params=262851 minH=0.999 D_ratio_max=2.07 D_ratio_final=2.07 rw_kind=gb
+da88b5f	kolmo2d	gboost	512	1	0.766984	0.0676579	721.2	steps=4467 steps_per_s=6.2 params=263202 stages=2 stage_width=7 stage_loss=0.0366/0.0203 stage_tvar=1.01/0.0366 stage_val=0.737/0.767 gb_stages=2
+da88b5f	kolmo2d	gboost	512	1	0.759507	0.0791223	720.8	steps=5633 steps_per_s=7.8 params=276204 stages=4 stage_width=5 stage_loss=0.0617/0.0454/0.0376/0.0315 stage_tvar=1.01/0.0616/0.0454/0.0376 stage_val=0.676/0.717/0.739/0.76
+da88b5f	kolmo2d	reweight_only	512	2	0.721215	0.0518658	720.2	rounds=29 steps=3236 steps_per_s=4.5 params=262851 minH=0.996 D_ratio_max=3.18 D_ratio_final=3.18 rw_kind=gb
+da88b5f	kolmo2d	pcgb	512	2	1.06308	0.144847	720.1	rounds=29 steps=3010 steps_per_s=4.2 params=262851 minH=0.999 D_ratio_max=2.23 D_ratio_final=2.23 rw_kind=gb
+da88b5f	kolmo2d	gboost	512	2	0.780557	0.072873	721.2	steps=4500 steps_per_s=6.2 params=263202 stages=2 stage_width=7 stage_loss=0.0387/0.021 stage_tvar=1.01/0.0387 stage_val=0.748/0.781 gb_stages=2
+da88b5f	kolmo2d	gboost	512	2	1.0689	0.0804637	720.8	steps=5654 steps_per_s=7.8 params=276204 stages=4 stage_width=5 stage_loss=0.0547/0.043/0.035/0.0294 stage_tvar=1.01/0.0547/0.043/0.0349 stage_val=1.07/1.06/1.07/1.07
+da88b5f	grayscott2d	reweight_only	512	0	0.704948	0.0424763	720.2	rounds=29 steps=3353 steps_per_s=4.7 params=262952 minH=0.981 D_ratio_max=5.00 D_ratio_final=5.00 rw_kind=gb
+da88b5f	grayscott2d	pcgb	512	0	0.759218	0.0532166	720.0	rounds=29 steps=3012 steps_per_s=4.2 params=262952 minH=0.980 D_ratio_max=5.00 D_ratio_final=5.00 rw_kind=gb
+da88b5f	grayscott2d	gboost	512	0	0.751421	0.0583176	720.8	steps=5802 steps_per_s=8.0 params=276408 stages=4 stage_width=5 stage_loss=0.0012/0.000504/0.00038/0.00037 stage_tvar=1/0.0012/0.000505/0.00038 stage_val=0.752/0.751/0.751/0.751
+da88b5f	grayscott2d	gboost	512	0	0.684101	0.0449895	721.4	steps=4585 steps_per_s=6.4 params=263344 stages=2 stage_width=7 stage_loss=0.000456/0.000116 stage_tvar=1/0.000456 stage_val=0.685/0.684 gb_stages=2
+da88b5f	grayscott2d	reweight_only	512	1	0.656018	0.0374691	720.1	rounds=29 steps=3361 steps_per_s=4.7 params=262952 minH=0.981 D_ratio_max=5.00 D_ratio_final=5.00 rw_kind=gb
+da88b5f	grayscott2d	pcgb	512	1	0.737315	0.0475656	720.2	rounds=29 steps=3059 steps_per_s=4.2 params=262952 minH=0.982 D_ratio_max=5.00 D_ratio_final=5.00 rw_kind=gb
+da88b5f	grayscott2d	gboost	512	1	0.743907	0.0542806	720.8	steps=5733 steps_per_s=8.0 params=276408 stages=4 stage_width=5 stage_loss=0.00137/0.000609/0.000489/0.000425 stage_tvar=0.999/0.00136/0.000609/0.000488 stage_val=0.738/0.745/0.742/0.744
+da88b5f	grayscott2d	gboost	512	1	0.731425	0.0460066	721.1	steps=4460 steps_per_s=6.2 params=263344 stages=2 stage_width=7 stage_loss=0.000631/0.000178 stage_tvar=0.999/0.00063 stage_val=0.726/0.731 gb_stages=2
+da88b5f	grayscott2d	reweight_only	512	2	0.659801	0.0364087	720.1	rounds=29 steps=3294 steps_per_s=4.6 params=262952 minH=0.983 D_ratio_max=5.00 D_ratio_final=5.00 rw_kind=gb
+da88b5f	grayscott2d	pcgb	512	2	0.713712	0.0455425	720.1	rounds=29 steps=2956 steps_per_s=4.1 params=262952 minH=0.980 D_ratio_max=5.00 D_ratio_final=5.00 rw_kind=gb
+da88b5f	grayscott2d	gboost	512	2	0.77603	0.0497071	720.9	steps=5498 steps_per_s=7.6 params=276408 stages=4 stage_width=5 stage_loss=0.00171/0.000755/0.000621/0.000559 stage_tvar=0.996/0.00171/0.000756/0.000617 stage_val=0.762/0.771/0.775/0.776
+da88b5f	grayscott2d	gboost	512	2	0.685078	0.0403929	721.2	steps=4426 steps_per_s=6.1 params=263344 stages=2 stage_width=7 stage_loss=0.000488/0.000171 stage_tvar=0.996/0.000487 stage_val=0.683/0.685 gb_stages=2

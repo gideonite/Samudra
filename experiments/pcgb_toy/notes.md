@@ -285,3 +285,67 @@ Figures from paper_figs.py and example_figs.py. Corrections found while writing 
 - Gray–Scott reweighting is *not* inert (L̄ < 0.5 in 90% of rounds, min β 0.18), yet still neutral (test 0.671 vs
   baseline 0.664). KS1D has β < 1 in 3.8% of rounds; Kolmo2D and denoise never do.
 - Phase 2 had 21 distinct traceable configurations, not ~25.
+
+## Gradient boosting variants
+
+Code: `--rw_kind {adaboost,gb}` (default adaboost = unchanged path) and new arm `gboost` (`--gb_stages K`, `--gb_width`, `--gb_nu`), commit `da88b5f`;
+jobs in `jobs/gb_variants.txt`; figure `figs/gb_variants.png`. All runs: n_train=512, 12-min budget, val split, seeds 0-2, rollout nRMSE (lower is better).
+Reference rows are the existing 12-min default-flag runs in results.tsv (summarize.py). "Win" rule: Δmean (ref − new) > 2 × the larger seed std of the pair.
+
+**Implementation.** `gb` weighting: t_i = mean_pix(r_i²)/mean_j(...), D_i ← (1−lam)D_i + lam·t_i on the scored subset, then the existing median clamp (clamp_ratio=5) and mean-1 renorm; Lbar logged, beta = NaN; pixel mode raises.
+`gboost`: K separate UNets (stage width auto-chosen so K·params ≈ baseline: K=4 → width 5, K=2 → width 7; totals 241k/233k on ks1d, 276k/263k on 2D vs baseline 235k/263k; ratios 0.99–1.05), stage k trains budget/K s (cosine LR per stage, same AdamW/clip/mse), stage k>1 fits y − F_{k−1}(x) with F_{k−1}(X) cached under no_grad.
+Because the UNet adds x internally, stages k>1 output `model(x) − x` (head-only correction); F_K = h_1 + ν Σ h_k, ν=1. Intermediate val evals are charged to the budget as in other arms.
+
+### Val nRMSE, mean ± std over 3 seeds (n=512, 12 min)
+
+| arm | ks1d | kolmo2d | grayscott2d |
+|---|---|---|---|
+| baseline | **0.0600 ± .0038** | 0.7406 ± .0276 | 0.6824 ± .0366 |
+| stochdepth | 0.2182 ± .0153 | **0.5300 ± .0119** | **0.6635 ± .0335** |
+| reweight_only (adaboost) | 0.0606 ± .0035 | 0.7434 ± .0313 | 0.6861 ± .0269 |
+| reweight_only (gb) | 0.0602 ± .0037 | 0.7446 ± .0218 | 0.6736 ± .0272 |
+| pcgb (adaboost) | 0.6189 ± .0653 | 0.9243 ± .0925 | 0.7419 ± .0280 |
+| pcgb (gb) | 0.5550 ± .0753 | 0.9628 ± .0869 | 0.7367 ± .0228 |
+| gboost K=2 | 0.0823 ± .0070 | 0.7760 ± .0078 | 0.7002 ± .0270 |
+| gboost K=4 | 0.1340 ± .0173 | 0.8728 ± .1705* | 0.7571 ± .0168 |
+
+*one seed (2) blew up to 1.069 in rollout (0.79 / 0.76 for the other two); its one-step val was fine, so it is a rollout instability, not a fit failure.
+
+Wins under the 2σ rule: none of the four new configs beats baseline on any dataset (gboost K=2/K=4 are significantly worse on ks1d, K=4 also on Gray-Scott; everything else is a tie), and none beats stochdepth on Kolmo2D/Gray-Scott. The only "wins" are over pcgb(adaboost) (reweight_only-gb on Gray-Scott: Δ=+0.068; gboost on ks1d), i.e. over an arm that is itself bad.
+pcgb with gb weighting vs pcgb with adaboost weighting: ties on all three datasets (ks1d −0.064, kolmo2d +0.038, gray-scott −0.005, all < 2σ). The mask damage dominates regardless of the weighting.
+
+### Weight-spread diagnostics (gb; D max/min over the 29 rounds, 3 seeds per cell)
+
+| arm / dataset | ratio median over rounds | max over rounds | final D max / D min | Lbar median |
+|---|---|---|---|---|
+| reweight_only ks1d | 2.3 | 2.6–2.7 | 1.5–1.7 / 0.71–0.73 | 0.74–0.76 |
+| reweight_only kolmo2d | 2.8 | 3.2–3.3 | 1.7–1.8 / 0.53 | 0.75–0.76 |
+| reweight_only grayscott2d | 5.0 (clamp active from round 1+) | 5.0 | 2.1–2.2 / 0.42–0.44 | 0.43–0.53 |
+| pcgb ks1d | 2.3–2.6 | 2.9–3.6 | 1.4–1.9 / 0.51–0.55 | 0.81 |
+| pcgb kolmo2d | 1.8–2.1 | 2.1–2.3 | 1.6–1.7 / 0.70–0.78 | 0.82–0.83 |
+| pcgb grayscott2d | 5.0 | 5.0 | 2.2–2.3 / 0.45–0.46 | 0.53–0.56 |
+
+So D does move (the adaboost version is exactly 1.0 on ks1d/kolmo2d), by a factor 2–3 on ks1d/kolmo2d and up to the 5× clamp on Gray-Scott, yet the normalised entropy stays ≥0.98 (most samples stay near 1, a tail is up-weighted).
+Being live changes nothing measurable: reweight_only gb ≡ reweight_only adaboost ≡ baseline within noise (Δ ≤ 0.012 everywhere). The weighting is not the lever; with n=512 and per-sample residuals that track a smooth per-sample difficulty, emphasising hard samples neither helps nor hurts at this strength (lam=0.3, clamp 5).
+
+### gboost per-stage losses (final train mse of the stage's target; mean over 3 seeds)
+
+| dataset, K | stage-k train loss (k=1..K) | val nRMSE of F_k (k=1..K) |
+|---|---|---|
+| ks1d K=2 | 2.0e-5 → 6.8e-7 | 0.073 → 0.082 |
+| ks1d K=4 | 8.7e-5 → 7.4e-6 → 7.0e-6 → 6.5e-6 | 0.105 → 0.134 → 0.134 → 0.134 |
+| kolmo2d K=2 | 0.039 → 0.021 | 0.747 → 0.776 |
+| kolmo2d K=4 | 0.062 → 0.047 → 0.038 → 0.032 | 0.83 → 0.84 → 0.86 → 0.87 (medians 0.73 → 0.75 → 0.78 → 0.79) |
+| grayscott2d K=2 | 5.3e-4 → 1.5e-4 | 0.698 → 0.700 |
+| grayscott2d K=4 | 1.4e-3 → 6.2e-4 → 5.0e-4 → 4.5e-4 | 0.751 → 0.756 → 0.756 → 0.757 |
+
+Stages k>1 do reduce the train residual (ks1d: ~10× from stage 1 → 2; Kolmo2D: 20–40 % per stage), but that reduction does not transfer: val nRMSE of F_k is flat (Gray-Scott) or worse (ks1d, Kolmo2D) after each added stage. I.e. the later stages mostly fit the 512-sample training residual (noise/overfit), not generalisable structure. The dominant cost is the budget split: a single stage 1 trained for 1/K of the time at width 5–7 is already much worse than the baseline on ks1d (0.073 for K=2 stage 1, 0.105 for K=4 stage 1 vs 0.060), and later stages cannot recover it.
+
+### Timing / drift check
+Baseline ks1d seed 0 re-run (scratch out_dir, not in results.tsv): steps_per_s 18.6 vs 16.3 / 17.6 / 17.4 in the old runs (seeds 0/1/2), metric 0.0600 vs 0.0606. The machine is not slower (if anything ~5–10 % faster); gb reweight_only runs showed 18.0 steps/s. gboost steps/s are higher (24–28 on ks1d, 6–8 on 2D) because the stages are narrower.
+
+### Verdict
+- GB-style reweighting is live (D spread 2–5×, Lbar 0.43–0.83) but, like AdaBoost.R2 on Gray-Scott, it is neutral: reweight_only(gb) ties baseline on all three datasets, and pcgb(gb) ties pcgb(adaboost), still 1.3–9× worse than baseline. The inertness of the AdaBoost gate was not the reason the weighting did nothing.
+- Stage-wise functional boosting at matched params and matched wall-clock loses to the single network: K=2 is 1.4× worse on ks1d (significant) and ties on the 2D sets; K=4 is worse still (2.2× on ks1d, 1.1× on Gray-Scott, unstable on Kolmo2D). Later stages fit train residual but add no val skill.
+- Nothing here beats stochdepth on Kolmo2D (0.530) or Gray-Scott (0.664). Best-config recommendation is unchanged: plain baseline for KS1D, stochastic depth where data-limited.
+- Caveat: one config per method (lam=0.3, clamp 5; ν=1, equal time per stage); n=512 val only, no test split evaluated.
