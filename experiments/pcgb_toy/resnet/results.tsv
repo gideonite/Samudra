@@ -152,3 +152,33 @@ f635756	ks1d	gboost	512	1	0.0667808	3.97301e-05	720.5	steps=6975 steps_per_s=9.7
 6d58e73	grayscott2d	pcgb	512	2	0.74068	0.0584951	720.3	rounds=21 steps=2335 steps_per_s=3.2 params=260852 minH=0.972 D_ratio_max=5.00 D_ratio_final=5.00 rw_kind=gb arch=resnet
 6d58e73	grayscott2d	gboost	512	2	0.75668	0.0583598	729.2	steps=577 steps_per_s=0.8 params=261224 stages=4 stage_width=24 stage_loss=0.0364/0.0345/0.0338/0.0363 stage_tvar=0.996/0.0363/0.0353/0.0352 stage_val=0.764/0.757/0.757/0.757 arch=resnet
 6d58e73	grayscott2d	gboost	512	2	0.701368	0.0475571	736.6	steps=389 steps_per_s=0.5 params=264394 stages=2 stage_width=35 stage_loss=0.0241/0.0233 stage_tvar=0.996/0.0244 stage_val=0.702/0.701 arch=resnet gb_stages=2
+6d58e73	ks1d	pcgb	512	0	1.33999	0.0116109	720.0	rounds=29 steps=8241 steps_per_s=11.4 params=230065 minH=1.000 mask_rule=random arch=resnet
+6d58e73	ks1d	pcgb	512	0	0.560825	0.00320791	720.0	rounds=29 steps=85225 steps_per_s=118.4 params=230065 minH=1.000 norepeat=2 arch=resnet
+6d58e73	ks1d	pcgb	512	0	0.255517	0.00131901	720.2	rounds=29 steps=3735 steps_per_s=5.2 params=230065 minH=1.000 mask_target=blocks arch=resnet
+65fdb77	ks1d	pcgb	512	0	1.22071	0.00789059	720.0	rounds=29 steps=9785 steps_per_s=13.6 params=230065 minH=1.000 mask_exclude_all_drop=True arch=resnet
+65fdb77	ks1d	stochdepth	512	0	0.18929	0.000747432	720.1	rounds=29 steps=5073 steps_per_s=7.0 params=230065 arch=resnet sd_block_p_res=0.5
+65fdb77	kolmo2d	pcgb	512	0	1.04445	0.153841	720.0	rounds=21 steps=234 steps_per_s=0.3 params=260351 minH=1.000 mask_rule=random arch=resnet
+65fdb77	kolmo2d	pcgb	512	0	1.15968	0.190802	720.0	rounds=23 steps=5752 steps_per_s=8.0 params=260351 minH=1.000 norepeat=2 arch=resnet
+65fdb77	kolmo2d	pcgb	512	0	0.943866	0.135393	721.6	rounds=12 steps=74 steps_per_s=0.1 params=260351 minH=1.000 mask_target=blocks arch=resnet
+65fdb77	kolmo2d	pcgb	512	0	0.985656	0.166311	720.1	rounds=21 steps=229 steps_per_s=0.3 params=260351 minH=1.000 mask_exclude_all_drop=True arch=resnet
+65fdb77	ks1d	pcgb	512	1	0.8809	0.00890124	720.1	rounds=29 steps=60265 steps_per_s=83.7 params=230065 minH=1.000 mask_rule=random arch=resnet
+65fdb77	kolmo2d	stochdepth	512	0	0.645978	0.0547339	721.3	rounds=29 steps=379 steps_per_s=0.5 params=260351 arch=resnet sd_block_p_res=0.5
+65fdb77	ks1d	pcgb	512	1	1.18692	0.0160763	720.1	rounds=29 steps=78154 steps_per_s=108.5 params=230065 minH=1.000 norepeat=2 arch=resnet
+65fdb77	ks1d	pcgb	512	1	0.699821	0.0027934	720.2	rounds=29 steps=3780 steps_per_s=5.2 params=230065 minH=1.000 mask_target=blocks arch=resnet
+65fdb77	ks1d	pcgb	512	1	0.658598	0.00304898	720.0	rounds=29 steps=9931 steps_per_s=13.8 params=230065 minH=1.000 mask_exclude_all_drop=True arch=resnet
+65fdb77	ks1d	stochdepth	512	1	0.174301	0.000507418	720.1	rounds=29 steps=5234 steps_per_s=7.3 params=230065 arch=resnet sd_block_p_res=0.5
+65fdb77	kolmo2d	pcgb	512	1	1.30906	0.170676	720.2	rounds=19 steps=1768 steps_per_s=2.5 params=260351 minH=1.000 mask_rule=random arch=resnet
+65fdb77	kolmo2d	pcgb	512	1	1.17145	0.178788	720.4	rounds=20 steps=4548 steps_per_s=6.3 params=260351 minH=1.000 norepeat=2 arch=resnet
+65fdb77	kolmo2d	pcgb	512	1	0.945956	0.13451	724.1	rounds=10 steps=78 steps_per_s=0.1 params=260351 minH=1.000 mask_target=blocks arch=resnet
+65fdb77	kolmo2d	pcgb	512	1	1.51618	0.186884	721.2	rounds=23 steps=231 steps_per_s=0.3 params=260351 minH=1.000 mask_exclude_all_drop=True arch=resnet
+65fdb77	ks1d	pcgb	512	2	1.69027	0.0491805	720.0	rounds=29 steps=23669 steps_per_s=32.9 params=230065 minH=1.000 mask_rule=random arch=resnet
+65fdb77	kolmo2d	stochdepth	512	1	0.649476	0.0578562	721.3	rounds=29 steps=382 steps_per_s=0.5 params=260351 arch=resnet sd_block_p_res=0.5
+65fdb77	ks1d	pcgb	512	2	0.569965	0.00632465	720.0	rounds=29 steps=77795 steps_per_s=108.0 params=230065 minH=1.000 norepeat=2 arch=resnet
+65fdb77	ks1d	pcgb	512	2	0.422844	0.00233783	720.1	rounds=29 steps=3836 steps_per_s=5.3 params=230065 minH=1.000 mask_target=blocks arch=resnet
+65fdb77	ks1d	pcgb	512	2	1.4577	0.00896115	720.0	rounds=29 steps=9801 steps_per_s=13.6 params=230065 minH=1.000 mask_exclude_all_drop=True arch=resnet
+65fdb77	ks1d	stochdepth	512	2	0.195053	0.000663511	720.1	rounds=29 steps=4996 steps_per_s=6.9 params=230065 arch=resnet sd_block_p_res=0.5
+65fdb77	kolmo2d	pcgb	512	2	1.32108	0.167174	720.1	rounds=20 steps=765 steps_per_s=1.1 params=260351 minH=1.000 mask_rule=random arch=resnet
+65fdb77	kolmo2d	pcgb	512	2	1.18448	0.172353	720.2	rounds=21 steps=4954 steps_per_s=6.9 params=260351 minH=1.000 norepeat=2 arch=resnet
+65fdb77	kolmo2d	pcgb	512	2	0.903519	0.118494	721.6	rounds=11 steps=81 steps_per_s=0.1 params=260351 minH=1.000 mask_target=blocks arch=resnet
+65fdb77	kolmo2d	pcgb	512	2	1.18321	0.15095	720.1	rounds=21 steps=258 steps_per_s=0.4 params=260351 minH=1.000 mask_exclude_all_drop=True arch=resnet
+65fdb77	kolmo2d	stochdepth	512	2	0.661297	0.0547225	720.1	rounds=29 steps=381 steps_per_s=0.5 params=260351 arch=resnet sd_block_p_res=0.5

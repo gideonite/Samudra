@@ -349,3 +349,5 @@ Baseline ks1d seed 0 re-run (scratch out_dir, not in results.tsv): steps_per_s 1
 - Stage-wise functional boosting at matched params and matched wall-clock loses to the single network: K=2 is 1.4× worse on ks1d (significant) and ties on the 2D sets; K=4 is worse still (2.2× on ks1d, 1.1× on Gray-Scott, unstable on Kolmo2D). Later stages fit train residual but add no val skill.
 - Nothing here beats stochdepth on Kolmo2D (0.530) or Gray-Scott (0.664). Best-config recommendation is unchanged: plain baseline for KS1D, stochastic depth where data-limited.
 - Caveat: one config per method (lam=0.3, clamp 5; ν=1, equal time per stage); n=512 val only, no test split evaluated.
+
+ResNet redo (isotropic ConvNeXt ResNet, same five arms + GB variants, own results.tsv): see resnet/notes.md

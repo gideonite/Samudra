@@ -1,0 +1,142 @@
+denoise_baseline_n512_s0_24d0636_c809bc val 0.14975 test 0.14976
+denoise_baseline_n512_s1_24d0636_435728 val 0.15044 test 0.14994
+denoise_baseline_n512_s2_24d0636_435728 val 0.15166 test 0.15130
+denoise_pcgb_n512_s0_0654df9_435728 val 0.28849 test 0.28779
+denoise_pcgb_n512_s1_a2c80fe_435728 val 0.25302 test 0.25451
+denoise_pcgb_n512_s2_7f8dc0f_435728 val 0.27270 test 0.27174
+denoise_pcgb_n512_s0_0654df9_5ec4bd val 0.27886 test 0.27706
+denoise_pcgb_n512_s1_a2c80fe_5ec4bd val 0.51823 test 0.51717
+denoise_pcgb_n512_s2_f635756_5ec4bd val 0.25179 test 0.25151
+denoise_reweight_only_n512_s0_0654df9_435728 val 0.15280 test 0.15297
+denoise_reweight_only_n512_s1_a2c80fe_435728 val 0.15246 test 0.15206
+denoise_reweight_only_n512_s2_f635756_435728 val 0.15423 test 0.15393
+denoise_stochdepth_n512_s0_0654df9_435728 val 0.16128 test 0.16124
+denoise_stochdepth_n512_s1_a2c80fe_435728 val 0.16705 test 0.16629
+denoise_stochdepth_n512_s2_7f8dc0f_435728 val 0.16600 test 0.16574
+grayscott2d_baseline_n512_s0_24d0636_c809bc val 0.75443 test 0.65221
+grayscott2d_baseline_n512_s1_24d0636_435728 val 0.64476 test 0.64742
+grayscott2d_baseline_n512_s2_24d0636_435728 val 0.67773 test 0.64197
+grayscott2d_pcgb_n512_s0_0654df9_435728 val 0.76102 test 0.62668
+grayscott2d_pcgb_n512_s1_a2c80fe_435728 val 0.79832 test 0.66814
+grayscott2d_pcgb_n512_s2_7f8dc0f_435728 val 0.79045 test 0.65924
+grayscott2d_pcgb_n512_s0_0654df9_5ec4bd val 0.77185 test 0.64459
+grayscott2d_pcgb_n512_s1_7f8dc0f_5ec4bd val 0.79016 test 0.68601
+grayscott2d_pcgb_n512_s2_f635756_5ec4bd val 0.77992 test 0.66496
+grayscott2d_reweight_only_n512_s0_0654df9_435728 val 0.75931 test 0.65400
+grayscott2d_reweight_only_n512_s1_a2c80fe_435728 val 0.70069 test 0.67097
+grayscott2d_reweight_only_n512_s2_f635756_435728 val 0.72708 test 0.65720
+grayscott2d_stochdepth_n512_s0_0654df9_435728 val 0.74998 test 0.64752
+grayscott2d_stochdepth_n512_s1_a2c80fe_435728 val 0.72262 test 0.64162
+grayscott2d_stochdepth_n512_s2_7f8dc0f_435728 val 0.70039 test 0.63916
+kolmo2d_baseline_n128_s0_24d0636_435728 val 0.57469 test 0.57224
+kolmo2d_baseline_n128_s1_0654df9_435728 val 0.59051 test 0.58617
+kolmo2d_baseline_n128_s2_7f8dc0f_435728 val 0.56285 test 0.56887
+kolmo2d_pcgb_n128_s0_2fe4277_435728 val 1.03351 test 1.03307
+kolmo2d_pcgb_n128_s1_0654df9_435728 val 1.43279 test 1.43683
+kolmo2d_pcgb_n128_s2_7f8dc0f_435728 val 1.17712 test 1.18845
+kolmo2d_pcgb_n128_s0_0654df9_5ec4bd val 1.03312 test 1.05502
+kolmo2d_pcgb_n128_s1_a2c80fe_5ec4bd val 1.14217 test 1.14476
+kolmo2d_pcgb_n128_s2_f635756_5ec4bd val 1.16380 test 1.15042
+kolmo2d_stochdepth_n128_s0_2fe4277_435728 val 0.62285 test 0.62932
+kolmo2d_stochdepth_n128_s1_0654df9_435728 val 0.63894 test 0.63930
+kolmo2d_stochdepth_n128_s2_7f8dc0f_435728 val 0.63769 test 0.64479
+kolmo2d_baseline_n512_s0_24d0636_c809bc val 0.56490 test 0.56138
+kolmo2d_baseline_n512_s1_24d0636_435728 val 0.57418 test 0.56785
+kolmo2d_baseline_n512_s2_24d0636_435728 val 0.55242 test 0.55319
+kolmo2d_mask_only_n512_s0_0654df9_435728 val 1.16635 test 1.15049
+kolmo2d_mask_only_n512_s1_a2c80fe_435728 val 1.37118 test 1.39288
+kolmo2d_mask_only_n512_s2_7f8dc0f_435728 val 1.03938 test 1.05514
+kolmo2d_pcgb_n512_s0_2fe4277_435728 val 1.06323 test 1.08071
+kolmo2d_pcgb_n512_s1_a2c80fe_435728 val 1.03107 test 1.03809
+kolmo2d_pcgb_n512_s2_7f8dc0f_435728 val 0.91908 test 0.94275
+kolmo2d_reweight_only_n512_s0_0654df9_435728 val 0.60369 test 0.59588
+kolmo2d_reweight_only_n512_s1_a2c80fe_435728 val 0.60457 test 0.59670
+kolmo2d_reweight_only_n512_s2_f635756_435728 val 0.58958 test 0.59073
+kolmo2d_stochdepth_n512_s0_2fe4277_435728 val 0.61756 test 0.62224
+kolmo2d_stochdepth_n512_s1_0654df9_435728 val 0.63186 test 0.62856
+kolmo2d_stochdepth_n512_s2_7f8dc0f_435728 val 0.63447 test 0.64276
+kolmo2d_baseline_n2048_s0_2fe4277_435728 val 0.57075 test 0.56985
+kolmo2d_baseline_n2048_s1_0654df9_435728 val 0.56959 test 0.56622
+kolmo2d_baseline_n2048_s2_7f8dc0f_435728 val 0.54894 test 0.54933
+kolmo2d_mask_only_n2048_s0_0654df9_435728 val 1.11402 test 1.10244
+kolmo2d_mask_only_n2048_s1_a2c80fe_435728 val 1.16826 test 1.18292
+kolmo2d_mask_only_n2048_s2_7f8dc0f_435728 val 0.96900 test 0.98475
+kolmo2d_pcgb_n2048_s0_0654df9_435728 val 1.09488 test 1.09801
+kolmo2d_pcgb_n2048_s1_a2c80fe_435728 val 0.99626 test 1.00573
+kolmo2d_pcgb_n2048_s2_7f8dc0f_435728 val 1.26287 test 1.27610
+kolmo2d_reweight_only_n2048_s0_0654df9_435728 val 0.60659 test 0.59997
+kolmo2d_reweight_only_n2048_s1_a2c80fe_435728 val 0.60174 test 0.59568
+kolmo2d_reweight_only_n2048_s2_f635756_435728 val 0.58850 test 0.58932
+kolmo2d_stochdepth_n2048_s0_2fe4277_435728 val 0.61018 test 0.61637
+kolmo2d_stochdepth_n2048_s1_a2c80fe_435728 val 0.62617 test 0.62170
+kolmo2d_stochdepth_n2048_s2_7f8dc0f_435728 val 0.63571 test 0.64067
+ks1d_baseline_n128_s0_24d0636_435728 val 0.04021 test 0.04970
+ks1d_baseline_n128_s1_0654df9_435728 val 0.04702 test 0.05022
+ks1d_baseline_n128_s2_7f8dc0f_435728 val 0.04641 test 0.05061
+ks1d_pcgb_n128_s0_2fe4277_435728 val 1.30255 test 1.28378
+ks1d_pcgb_n128_s1_0654df9_435728 val 1.51025 test 1.48521
+ks1d_pcgb_n128_s2_7f8dc0f_435728 val 1.43968 test 1.41488
+ks1d_pcgb_n128_s0_0654df9_5ec4bd val 1.29495 test 1.30606
+ks1d_pcgb_n128_s1_a2c80fe_5ec4bd val 0.49397 test 0.48392
+ks1d_pcgb_n128_s2_f635756_5ec4bd val 1.11395 test 1.09705
+ks1d_stochdepth_n128_s0_2fe4277_435728 val 0.11454 test 0.13091
+ks1d_stochdepth_n128_s1_0654df9_435728 val 0.10913 test 0.12883
+ks1d_stochdepth_n128_s2_7f8dc0f_435728 val 0.12113 test 0.13269
+ks1d_baseline_n512_s0_24d0636_c809bc val 0.03759 test 0.04324
+ks1d_baseline_n512_s1_24d0636_435728 val 0.03906 test 0.04416
+ks1d_baseline_n512_s2_24d0636_435728 val 0.04114 test 0.04619
+ks1d_mask_only_n512_s0_0654df9_435728 val 1.32457 test 1.28523
+ks1d_mask_only_n512_s1_a2c80fe_435728 val 1.27685 test 1.25163
+ks1d_mask_only_n512_s2_7f8dc0f_435728 val 1.60275 test 1.55435
+ks1d_pcgb_n512_s0_2fe4277_435728 val 1.24929 test 1.24106
+ks1d_pcgb_n512_s1_0654df9_435728 val 1.08640 test 1.06145
+ks1d_pcgb_n512_s2_7f8dc0f_435728 val 1.39222 test 1.38273
+ks1d_pcgb_n512_s0_0654df9_5ec4bd val 1.14850 test 1.12213
+ks1d_pcgb_n512_s1_a2c80fe_5ec4bd val 1.47037 test 1.45251
+ks1d_pcgb_n512_s2_f635756_5ec4bd val 1.41388 test 1.40135
+ks1d_reweight_only_n512_s0_0654df9_435728 val 0.03868 test 0.04455
+ks1d_reweight_only_n512_s1_a2c80fe_435728 val 0.03954 test 0.04459
+ks1d_reweight_only_n512_s2_f635756_435728 val 0.04168 test 0.04676
+ks1d_stochdepth_n512_s0_2fe4277_435728 val 0.11877 test 0.13399
+ks1d_stochdepth_n512_s1_0654df9_435728 val 0.10832 test 0.12883
+ks1d_stochdepth_n512_s2_7f8dc0f_435728 val 0.12053 test 0.13396
+ks1d_baseline_n2048_s0_24d0636_435728 val 0.03711 test 0.04450
+ks1d_baseline_n2048_s1_0654df9_435728 val 0.03794 test 0.04227
+ks1d_baseline_n2048_s2_7f8dc0f_435728 val 0.04090 test 0.04500
+ks1d_mask_only_n2048_s0_0654df9_435728 val 0.70356 test 0.70044
+ks1d_mask_only_n2048_s1_a2c80fe_435728 val 1.13857 test 1.11044
+ks1d_mask_only_n2048_s2_7f8dc0f_435728 val 1.34425 test 1.34435
+ks1d_pcgb_n2048_s0_2fe4277_435728 val 1.59092 test 1.56516
+ks1d_pcgb_n2048_s1_0654df9_435728 val 1.40031 test 1.37246
+ks1d_pcgb_n2048_s2_7f8dc0f_435728 val 1.03738 test 1.00819
+ks1d_reweight_only_n2048_s0_0654df9_435728 val 0.03613 test 0.04291
+ks1d_reweight_only_n2048_s1_a2c80fe_435728 val 0.03816 test 0.04275
+ks1d_reweight_only_n2048_s2_f635756_435728 val 0.04173 test 0.04581
+ks1d_stochdepth_n2048_s0_2fe4277_435728 val 0.11778 test 0.13626
+ks1d_stochdepth_n2048_s1_0654df9_435728 val 0.11103 test 0.13234
+ks1d_stochdepth_n2048_s2_7f8dc0f_435728 val 0.12514 test 0.14089
+| arm | ks1d n=128 | ks1d n=512 | ks1d n=2048 | kolmo2d n=128 | kolmo2d n=512 | kolmo2d n=2048 | denoise n=512 | grayscott2d n=512 |
+|---|---|---|---|---|---|---|---|---|
+| baseline | 0.050 ± 0.000 (0.045) | 0.045 ± 0.002 (0.039) | 0.044 ± 0.001 (0.039) | 0.576 ± 0.009 (0.576) | 0.561 ± 0.007 (0.564) | 0.562 ± 0.011 (0.563) | 0.150 ± 0.001 (0.151) | 0.647 ± 0.005 (0.692) |
+| stochdepth | 0.131 ± 0.002 (0.115) | 0.132 ± 0.003 (0.116) | 0.136 ± 0.004 (0.118) | 0.638 ± 0.008 (0.633) | 0.631 ± 0.011 (0.628) | 0.626 ± 0.013 (0.624) | 0.164 ± 0.003 (0.165) | 0.643 ± 0.004 (0.724) |
+| mask_only | – | 1.364 ± 0.166 (1.401) | 1.052 ± 0.326 (1.062) | – | 1.200 ± 0.174 (1.192) | 1.090 ± 0.100 (1.084) | – | – |
+| reweight_only | – | 0.045 ± 0.001 (0.040) | 0.044 ± 0.002 (0.039) | – | 0.594 ± 0.003 (0.599) | 0.595 ± 0.005 (0.599) | 0.153 ± 0.001 (0.153) | 0.661 ± 0.009 (0.729) |
+| pcgb | 1.395 ± 0.102 (1.417) | 1.228 ± 0.161 (1.243) | 1.315 ± 0.283 (1.343) | 1.219 ± 0.204 (1.214) | 1.021 ± 0.071 (1.004) | 1.127 ± 0.137 (1.118) | 0.271 ± 0.017 (0.271) | 0.651 ± 0.022 (0.783) |
+| pcgb_warm | 0.962 ± 0.427 (0.968) | 1.325 ± 0.178 (1.344) | – | 1.117 ± 0.054 (1.113) | – | – | 0.349 ± 0.147 (0.350) | 0.665 ± 0.021 (0.781) |
+
+Val→test rank agreement per column (over arms, using seed-mean metrics; lower = better):
+
+- ks1d n=128: Spearman 1.00, Kendall 1.00, same best arm: True (val baseline, test baseline); val order baseline < stochdepth < pcgb_warm < pcgb; test order baseline < stochdepth < pcgb_warm < pcgb
+- ks1d n=512: Spearman 1.00, Kendall 1.00, same best arm: True (val baseline, test baseline); val order baseline < reweight_only < stochdepth < pcgb < pcgb_warm < mask_only; test order baseline < reweight_only < stochdepth < pcgb < pcgb_warm < mask_only
+- ks1d n=2048: Spearman 0.90, Kendall 0.80, same best arm: False (val baseline, test reweight_only); val order baseline < reweight_only < stochdepth < mask_only < pcgb; test order reweight_only < baseline < stochdepth < mask_only < pcgb
+- kolmo2d n=128: Spearman 1.00, Kendall 1.00, same best arm: True (val baseline, test baseline); val order baseline < stochdepth < pcgb_warm < pcgb; test order baseline < stochdepth < pcgb_warm < pcgb
+- kolmo2d n=512: Spearman 1.00, Kendall 1.00, same best arm: True (val baseline, test baseline); val order baseline < reweight_only < stochdepth < pcgb < mask_only; test order baseline < reweight_only < stochdepth < pcgb < mask_only
+- kolmo2d n=2048: Spearman 1.00, Kendall 1.00, same best arm: True (val baseline, test baseline); val order baseline < reweight_only < stochdepth < mask_only < pcgb; test order baseline < reweight_only < stochdepth < mask_only < pcgb
+- denoise n=512: Spearman 1.00, Kendall 1.00, same best arm: True (val baseline, test baseline); val order baseline < reweight_only < stochdepth < pcgb < pcgb_warm; test order baseline < reweight_only < stochdepth < pcgb < pcgb_warm
+- grayscott2d n=512: Spearman 0.60, Kendall 0.40, same best arm: False (val baseline, test stochdepth); val order baseline < stochdepth < reweight_only < pcgb_warm < pcgb; test order stochdepth < baseline < pcgb < reweight_only < pcgb_warm
+
+Cells: test mean ± sample std over seeds (val mean). k = number of seeds when not 3. Metric = 10-step rollout nRMSE (denoise: one-step nRMSE).
+
+Non-finite test rollouts: none
+
+Skipped/excluded:

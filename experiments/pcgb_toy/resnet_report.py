@@ -18,7 +18,7 @@ def load(path):
     for r in csv.DictReader(open(path), delimiter="\t"):
         if float(r["wallclock_s"]) > 3600: continue  # 10x-budget U-Net runs
         toks = r["notes"].split()
-        flags = " ".join(sorted(t for t in toks if "=" in t and t.split("=")[0] not in SKIP))
+        flags = " ".join(sorted(t for t in toks if "=" in t and "(" not in t and t.split("=")[0] not in SKIP))  # MASK_COLLAPSE(m=..) is a note, not a flag
         d = {t.split("=")[0]: t.split("=")[1] for t in toks if "=" in t}
         out.append(dict(ds=r["dataset"], arm=r["arm"], n=int(r["n_train"]), seed=int(r["seed"]), m=float(r["metric"]), flags=flags,
                         sps=float(d["steps_per_s"]) if "steps_per_s" in d else None, notes=r["notes"]))
