@@ -102,3 +102,29 @@ a2c80fe	denoise	pcgb	512	1	0.51823	0.268563	720.5	rounds=12 steps=1043 steps_per
 7f8dc0f	grayscott2d	stochdepth	512	2	0.700386	0.0460165	721.9	rounds=29 steps=309 steps_per_s=0.4 params=260852 arch=resnet
 7f8dc0f	grayscott2d	pcgb	512	2	0.790448	0.0588402	720.0	rounds=20 steps=2416 steps_per_s=3.4 params=260852 minH=0.998 arch=resnet
 7f8dc0f	ks1d	mask_only	512	2	1.60275	0.121675	720.0	rounds=29 steps=158868 steps_per_s=220.6 params=230065 arch=resnet
+7f8dc0f	ks1d	mask_only	2048	2	1.34425	0.128473	720.0	rounds=29 steps=165003 steps_per_s=229.2 params=230065 MASK_COLLAPSE(m=0,21/29) arch=resnet
+7f8dc0f	kolmo2d	mask_only	512	2	1.03938	0.184675	720.0	rounds=23 steps=8990 steps_per_s=12.5 params=260351 arch=resnet
+7f8dc0f	kolmo2d	mask_only	2048	2	0.968999	0.179776	720.0	rounds=23 steps=9833 steps_per_s=13.7 params=260351 arch=resnet
+f635756	ks1d	reweight_only	512	2	0.0416782	1.66465e-05	720.1	rounds=29 steps=3809 steps_per_s=5.3 params=230065 minH=0.999 arch=resnet
+f635756	ks1d	reweight_only	2048	2	0.0417334	1.60546e-05	720.2	rounds=29 steps=3728 steps_per_s=5.2 params=230065 minH=1.000 arch=resnet
+f635756	kolmo2d	reweight_only	512	2	0.589579	0.0357714	722.2	rounds=29 steps=222 steps_per_s=0.3 params=260351 minH=1.000 arch=resnet
+f635756	kolmo2d	reweight_only	2048	2	0.588503	0.0353012	720.3	rounds=29 steps=225 steps_per_s=0.3 params=260351 minH=1.000 arch=resnet
+f635756	denoise	reweight_only	512	2	0.154227	0.0237861	720.2	rounds=29 steps=268 steps_per_s=0.4 params=260351 minH=1.000 arch=resnet
+f635756	grayscott2d	reweight_only	512	2	0.72708	0.0489788	720.4	rounds=29 steps=219 steps_per_s=0.3 params=260852 minH=0.997 arch=resnet
+f635756	ks1d	pcgb	128	2	1.11395	0.0377295	720.0	rounds=29 steps=86421 steps_per_s=120.0 params=230065 MASK_COLLAPSE(m=0,23/29) minH=1.000 warm_frac=0.5 arch=resnet
+f635756	ks1d	pcgb	512	2	1.41388	0.103258	720.0	rounds=29 steps=92565 steps_per_s=128.6 params=230065 MASK_COLLAPSE(m=0,25/29) minH=1.000 warm_frac=0.5 arch=resnet
+f635756	kolmo2d	pcgb	128	2	1.1638	0.097804	720.0	rounds=13 steps=4051 steps_per_s=5.6 params=260351 minH=1.000 warm_frac=0.5 arch=resnet
+f635756	denoise	pcgb	512	2	0.251789	0.0633977	725.5	rounds=14 steps=1760 steps_per_s=2.4 params=260351 minH=1.000 warm_frac=0.5 arch=resnet
+f635756	grayscott2d	pcgb	512	2	0.779916	0.0579763	726.3	rounds=14 steps=1144 steps_per_s=1.6 params=260852 minH=0.999 warm_frac=0.5 arch=resnet
+f635756	ks1d	reweight_only	512	0	0.0403647	1.25901e-05	720.1	rounds=29 steps=3587 steps_per_s=5.0 params=230065 minH=0.992 D_ratio_max=3.80 D_ratio_final=3.76 rw_kind=gb arch=resnet
+f635756	ks1d	pcgb	512	0	1.12289	0.126977	720.0	rounds=29 steps=155496 steps_per_s=216.0 params=230065 minH=0.996 D_ratio_max=3.57 D_ratio_final=3.57 rw_kind=gb arch=resnet
+f635756	ks1d	gboost	512	0	0.0712586	6.09579e-05	720.6	steps=6711 steps_per_s=9.3 params=238948 stages=4 stage_width=24 stage_loss=7.78e-05/7.39e-05/7.39e-05/7.3e-05 stage_tvar=1/7.74e-05/7.38e-05/7.36e-05 stage_val=0.0719/0.071/0.0706/0.0713 arch=resnet
+f635756	ks1d	gboost	512	0	0.0702947	3.64847e-05	721.6	steps=4721 steps_per_s=6.5 params=234534 stages=2 stage_width=34 stage_loss=4.37e-05/4.25e-05 stage_tvar=1/4.35e-05 stage_val=0.0713/0.0703 arch=resnet gb_stages=2
+f635756	kolmo2d	reweight_only	512	0	0.619488	0.0364952	721.5	rounds=29 steps=226 steps_per_s=0.3 params=260351 minH=0.995 D_ratio_max=3.89 D_ratio_final=3.89 rw_kind=gb arch=resnet
+f635756	kolmo2d	pcgb	512	0	1.06904	0.17239	720.0	rounds=21 steps=9924 steps_per_s=13.8 params=260351 minH=0.997 D_ratio_max=2.78 D_ratio_final=2.78 rw_kind=gb arch=resnet
+f635756	grayscott2d	reweight_only	512	0	0.792903	0.0573592	720.8	rounds=29 steps=221 steps_per_s=0.3 params=260852 minH=0.973 D_ratio_max=5.00 D_ratio_final=5.00 rw_kind=gb arch=resnet
+f635756	kolmo2d	gboost	512	0	0.713833	0.073224	730.1	steps=561 steps_per_s=0.8 params=260260 stages=4 stage_width=24 stage_loss=0.0745/0.0731/0.0733/0.072 stage_tvar=1.02/0.0746/0.0729/0.0727 stage_val=0.722/0.716/0.714/0.714 arch=resnet
+f635756	kolmo2d	gboost	512	0	0.640911	0.0435928	736.9	steps=386 steps_per_s=0.5 params=263692 stages=2 stage_width=35 stage_loss=0.0439/0.0443 stage_tvar=1.02/0.0441 stage_val=0.641/0.641 arch=resnet gb_stages=2
+f635756	grayscott2d	pcgb	512	0	0.765631	0.0613223	721.3	rounds=17 steps=678 steps_per_s=0.9 params=260852 minH=0.973 D_ratio_max=5.00 D_ratio_final=5.00 rw_kind=gb arch=resnet
+f635756	grayscott2d	gboost	512	0	0.746551	0.0552665	735.3	steps=390 steps_per_s=0.5 params=264394 stages=2 stage_width=35 stage_loss=0.0297/0.0288 stage_tvar=1/0.0298 stage_val=0.748/0.747 arch=resnet gb_stages=2
+f635756	grayscott2d	gboost	512	0	0.754933	0.0598614	728.7	steps=572 steps_per_s=0.8 params=261224 stages=4 stage_width=24 stage_loss=0.0326/0.0319/0.0311/0.0311 stage_tvar=1/0.0336/0.0327/0.0325 stage_val=0.761/0.757/0.755/0.755 arch=resnet
