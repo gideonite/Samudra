@@ -77,3 +77,28 @@ a2c80fe	kolmo2d	reweight_only	2048	1	0.601742	0.0365736	720.5	rounds=29 steps=23
 a2c80fe	denoise	reweight_only	512	1	0.152463	0.023245	721.8	rounds=29 steps=284 steps_per_s=0.4 params=260351 minH=1.000 arch=resnet
 a2c80fe	grayscott2d	reweight_only	512	1	0.700689	0.0432232	720.4	rounds=29 steps=237 steps_per_s=0.3 params=260852 minH=0.996 arch=resnet
 a2c80fe	ks1d	pcgb	128	1	0.493966	0.00653356	720.0	rounds=29 steps=100083 steps_per_s=139.0 params=230065 MASK_COLLAPSE(m=0,26/29) minH=1.000 warm_frac=0.5 arch=resnet
+a2c80fe	ks1d	pcgb	512	1	1.47037	0.0942627	720.0	rounds=29 steps=87930 steps_per_s=122.1 params=230065 MASK_COLLAPSE(m=0,23/29) minH=1.000 warm_frac=0.5 arch=resnet
+a2c80fe	kolmo2d	pcgb	128	1	1.14217	0.106963	720.0	rounds=13 steps=1967 steps_per_s=2.7 params=260351 minH=1.000 warm_frac=0.5 arch=resnet
+a2c80fe	denoise	pcgb	512	1	0.51823	0.268563	720.5	rounds=12 steps=1043 steps_per_s=1.4 params=260351 minH=1.000 warm_frac=0.5 arch=resnet
+7f8dc0f	grayscott2d	pcgb	512	1	0.790163	0.0574913	726.9	rounds=14 steps=1531 steps_per_s=2.1 params=260852 minH=0.999 warm_frac=0.5 arch=resnet
+7f8dc0f	ks1d	baseline	128	2	0.046406	2.03301e-05	720.1	rounds=29 steps=3709 steps_per_s=5.2 params=230065 arch=resnet
+7f8dc0f	ks1d	baseline	2048	2	0.0408994	1.56935e-05	720.1	rounds=29 steps=3705 steps_per_s=5.1 params=230065 arch=resnet
+7f8dc0f	kolmo2d	baseline	128	2	0.562846	0.0332506	720.2	rounds=29 steps=271 steps_per_s=0.4 params=260351 arch=resnet
+7f8dc0f	ks1d	stochdepth	128	2	0.121132	0.000189768	720.1	rounds=29 steps=4121 steps_per_s=5.7 params=230065 arch=resnet
+7f8dc0f	kolmo2d	baseline	2048	2	0.548938	0.0314998	720.3	rounds=29 steps=274 steps_per_s=0.4 params=260351 arch=resnet
+7f8dc0f	ks1d	pcgb	128	2	1.43968	0.0563063	720.0	rounds=29 steps=180676 steps_per_s=250.9 params=230065 MASK_COLLAPSE(m=0,22/29) minH=1.000 arch=resnet
+7f8dc0f	ks1d	stochdepth	512	2	0.120533	0.000194675	720.1	rounds=29 steps=4238 steps_per_s=5.9 params=230065 arch=resnet
+7f8dc0f	ks1d	pcgb	512	2	1.39222	0.101556	720.0	rounds=29 steps=162831 steps_per_s=226.2 params=230065 minH=1.000 arch=resnet
+7f8dc0f	ks1d	stochdepth	2048	2	0.125137	0.000206794	720.2	rounds=29 steps=4164 steps_per_s=5.8 params=230065 arch=resnet
+7f8dc0f	ks1d	pcgb	2048	2	1.03738	0.00901586	720.0	rounds=29 steps=152437 steps_per_s=211.7 params=230065 minH=1.000 arch=resnet
+7f8dc0f	kolmo2d	stochdepth	128	2	0.637695	0.0465047	721.0	rounds=29 steps=308 steps_per_s=0.4 params=260351 arch=resnet
+7f8dc0f	kolmo2d	pcgb	128	2	1.17712	0.197409	720.0	rounds=22 steps=13709 steps_per_s=19.0 params=260351 minH=1.000 arch=resnet
+7f8dc0f	kolmo2d	stochdepth	512	2	0.634466	0.0456367	720.1	rounds=29 steps=306 steps_per_s=0.4 params=260351 arch=resnet
+7f8dc0f	kolmo2d	pcgb	512	2	0.919083	0.174836	720.0	rounds=23 steps=10126 steps_per_s=14.1 params=260351 minH=1.000 arch=resnet
+7f8dc0f	kolmo2d	stochdepth	2048	2	0.635712	0.045063	720.4	rounds=29 steps=308 steps_per_s=0.4 params=260351 arch=resnet
+7f8dc0f	kolmo2d	pcgb	2048	2	1.26287	0.174242	720.0	rounds=22 steps=11938 steps_per_s=16.6 params=260351 minH=1.000 arch=resnet
+7f8dc0f	denoise	stochdepth	512	2	0.166004	0.0275573	721.2	rounds=29 steps=353 steps_per_s=0.5 params=260351 arch=resnet
+7f8dc0f	denoise	pcgb	512	2	0.272705	0.074368	720.0	rounds=23 steps=17567 steps_per_s=24.4 params=260351 MASK_COLLAPSE(m=0,19/23) minH=1.000 arch=resnet
+7f8dc0f	grayscott2d	stochdepth	512	2	0.700386	0.0460165	721.9	rounds=29 steps=309 steps_per_s=0.4 params=260852 arch=resnet
+7f8dc0f	grayscott2d	pcgb	512	2	0.790448	0.0588402	720.0	rounds=20 steps=2416 steps_per_s=3.4 params=260852 minH=0.998 arch=resnet
+7f8dc0f	ks1d	mask_only	512	2	1.60275	0.121675	720.0	rounds=29 steps=158868 steps_per_s=220.6 params=230065 arch=resnet
