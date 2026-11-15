@@ -1,0 +1,13 @@
+# ResNet stage a: baselines n=512 x 4 datasets x seeds 0-2 (seed 0 logs grad norms for phase0_analysis)
+--arch resnet --out_dir resnet --dataset ks1d --arm baseline --n_train 512 --seed 0 --log_grad_norms 50
+--arch resnet --out_dir resnet --dataset kolmo2d --arm baseline --n_train 512 --seed 0 --log_grad_norms 50
+--arch resnet --out_dir resnet --dataset denoise --arm baseline --n_train 512 --seed 0 --log_grad_norms 50
+--arch resnet --out_dir resnet --dataset grayscott2d --arm baseline --n_train 512 --seed 0 --log_grad_norms 50
+--arch resnet --out_dir resnet --dataset ks1d --arm baseline --n_train 512 --seed 1
+--arch resnet --out_dir resnet --dataset kolmo2d --arm baseline --n_train 512 --seed 1
+--arch resnet --out_dir resnet --dataset denoise --arm baseline --n_train 512 --seed 1
+--arch resnet --out_dir resnet --dataset grayscott2d --arm baseline --n_train 512 --seed 1
+--arch resnet --out_dir resnet --dataset ks1d --arm baseline --n_train 512 --seed 2
+--arch resnet --out_dir resnet --dataset kolmo2d --arm baseline --n_train 512 --seed 2
+--arch resnet --out_dir resnet --dataset denoise --arm baseline --n_train 512 --seed 2
+--arch resnet --out_dir resnet --dataset grayscott2d --arm baseline --n_train 512 --seed 2

@@ -2,7 +2,8 @@
 
 Usage: python phase0_analysis.py <run_dir> <label> [--out DIR] [--skip-lesion]
 Single thread; writes <out>/<label>.json. Plots are made by phase0_plots.py from these jsons.
-Unit convention: skip i bit set = kept (i=0 highest res); blocks 0-3 down, 4 mid, 5-8 up (5 deepest), 9 final.
+arch is read from args.json. resnet: skip bit g = group g (blocks 3g..3g+2) kept, 12 blocks, "skip" grad norms = per-group branch norms,
+path-length units = the 12 blocks only. Unit convention (unet): skip i bit set = kept (i=0 highest res); blocks 0-3 down, 4 mid, 5-8 up (5 deepest), 9 final.
 """
 import argparse, json, random
 from pathlib import Path
@@ -13,7 +14,6 @@ import torch
 import prepare
 import train
 
-BL = train.N_BLOCKS
 
 
 def gini(v):
@@ -28,13 +28,14 @@ def lesion(model, name, split, skip=None, block=None):
 
 
 def lesion_study(model, name, split, n_sub=10, seed=0):
+    BL = model.n_blocks
     res = {"full": lesion(model, name, split), "skip": {}, "block": {}, "randk": {}}
     for m in range(16):
         res["skip"][m] = lesion(model, name, split, skip=train.mask_bools(m))
     for b in range(BL):
         res["block"][b] = lesion(model, name, split, block=[i != b for i in range(BL)])
     rng = random.Random(seed)
-    for k in range(1, 6):
+    for k in range(1, 6 if BL == 10 else BL):  # random-k block removal (unet: k<=5; resnet: k<=11 of 12)
         rs = []
         for _ in range(n_sub):
             drop = set(rng.sample(range(BL), k))
@@ -44,6 +45,7 @@ def lesion_study(model, name, split, n_sub=10, seed=0):
 
 
 def grad_analysis(run, model):
+    resnet = not hasattr(model, "downs")
     rows = [json.loads(l) for l in open(run / "log.jsonl")]
     g = [r for r in rows if r["type"] == "gradnorm"]
     B = np.array([r["block"] for r in g]); S = np.array([r["skip"] for r in g]); steps = [r["step"] for r in g]
@@ -65,25 +67,28 @@ def grad_analysis(run, model):
             skip_norm=smean.tolist(), skip_share=(ssq / ssq.sum()).tolist(),
             gini_block=gini(bmean), gini_block_perparam=gini(pp), gini_skip=gini(smean),
             top2_block=float(np.sort(bsq)[-2:].sum() / bsq.sum()), top2_skip=float(np.sort(ssq)[-2:].sum() / ssq.sum()),
-            deepest_skip_over_max=float(smean[3] / smean.max()), deepest_blocks_over_max=float(max(bmean[4], bmean[5]) / bmean.max()))
+            deepest_skip_over_max=float(smean[3] / smean.max()),
+            deepest_blocks_over_max=float(max(bmean[4], bmean[5]) / bmean.max()) if not resnet else float(max(bmean[-2:]) / bmean.max()),
+            group_share=(np.add.reduceat(bsq, np.arange(0, len(bsq), 3)) / bsq.sum()).tolist() if resnet else None)
     out["phases"] = summ
     return out
 
 
 def path_length(model, X, Y, n_per_k=30, seed=0):
-    """Veit-style: 10 blocks + 4 skips are 14 binary units; sample random subsets with k units kept.
+    """Veit-style: unet: 10 blocks + 4 skips are 14 binary units; resnet: the 12 blocks only; sample random subsets with k units kept.
     For each: loss (one-step MSE on a train batch), ||d loss/d theta||, and ||(J-I)^T v|| (input-gradient of a fixed random
     cotangent through the masked net -- path-structure quantity independent of the residual error; the outer identity x+head(.) is subtracted since it would dominate)."""
+    BL = model.n_blocks; resnet = not hasattr(model, "downs"); units = BL if resnet else BL + 4
     rng = random.Random(seed); gen = torch.Generator().manual_seed(seed)
     x = X[:64].clone().requires_grad_(True); y = Y[:64]
     with torch.no_grad(): v = torch.randn(model(x.detach()).shape, generator=gen)
     out = {}
     model.eval()
-    for k in range(0, 15):
+    for k in range(0, units + 1):
         L, GP, GX = [], [], []
         for _ in range(n_per_k):
-            keep = set(rng.sample(range(14), k))
-            bm = [float(i in keep) for i in range(BL)]; sm = [i + BL in keep for i in range(4)]
+            keep = set(rng.sample(range(units), k))
+            bm = [float(i in keep) for i in range(BL)]; sm = [True] * 4 if resnet else [i + BL in keep for i in range(4)]
             model.zero_grad(set_to_none=True)
             yh = model(x, skip_mask=sm, block_mask=bm)
             loss = ((yh - y) ** 2).mean()
@@ -103,8 +108,8 @@ def main():
     torch.set_num_threads(1)
     run = Path(a.run_dir); cfg = json.loads((run / "args.json").read_text()); name = cfg["dataset"]
     meta = prepare.load(name)["meta"]
-    model = train.build_model(meta, cfg["width"], cfg["drop_mode"]); model.load_state_dict(torch.load(run / "model.pt")); model.eval()
-    res = dict(run=str(run), dataset=name, n_train=cfg["n_train"], arm=cfg["arm"])
+    model = train.model_from_cfg(meta, cfg); model.load_state_dict(torch.load(run / "model.pt")); model.eval()
+    res = dict(run=str(run), dataset=name, n_train=cfg["n_train"], arm=cfg["arm"], arch=cfg.get("arch", "unet"), n_blocks=model.n_blocks)
     if not a.no_lesion: res["lesion"] = lesion_study(model, name, a.split, a.n_sub)
     res["grad"] = grad_analysis(run, model)
     if not a.no_path:

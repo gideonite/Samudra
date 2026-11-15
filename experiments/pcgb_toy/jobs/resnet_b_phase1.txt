@@ -1,0 +1,106 @@
+# ResNet stage b: Phase-1 grid (val, 12 min). n=512 baselines reused from stage a
+--arch resnet --out_dir resnet --dataset ks1d --arm baseline --n_train 128 --seed 0
+--arch resnet --out_dir resnet --dataset ks1d --arm baseline --n_train 2048 --seed 0
+--arch resnet --out_dir resnet --dataset kolmo2d --arm baseline --n_train 128 --seed 0
+--arch resnet --out_dir resnet --dataset kolmo2d --arm baseline --n_train 2048 --seed 0
+--arch resnet --out_dir resnet --dataset ks1d --arm stochdepth --n_train 128 --seed 0
+--arch resnet --out_dir resnet --dataset ks1d --arm pcgb --n_train 128 --seed 0
+--arch resnet --out_dir resnet --dataset ks1d --arm stochdepth --n_train 512 --seed 0
+--arch resnet --out_dir resnet --dataset ks1d --arm pcgb --n_train 512 --seed 0
+--arch resnet --out_dir resnet --dataset ks1d --arm stochdepth --n_train 2048 --seed 0
+--arch resnet --out_dir resnet --dataset ks1d --arm pcgb --n_train 2048 --seed 0
+--arch resnet --out_dir resnet --dataset kolmo2d --arm stochdepth --n_train 128 --seed 0
+--arch resnet --out_dir resnet --dataset kolmo2d --arm pcgb --n_train 128 --seed 0
+--arch resnet --out_dir resnet --dataset kolmo2d --arm stochdepth --n_train 512 --seed 0
+--arch resnet --out_dir resnet --dataset kolmo2d --arm pcgb --n_train 512 --seed 0
+--arch resnet --out_dir resnet --dataset kolmo2d --arm stochdepth --n_train 2048 --seed 0
+--arch resnet --out_dir resnet --dataset kolmo2d --arm pcgb --n_train 2048 --seed 0
+--arch resnet --out_dir resnet --dataset denoise --arm stochdepth --n_train 512 --seed 0
+--arch resnet --out_dir resnet --dataset denoise --arm pcgb --n_train 512 --seed 0
+--arch resnet --out_dir resnet --dataset grayscott2d --arm stochdepth --n_train 512 --seed 0
+--arch resnet --out_dir resnet --dataset grayscott2d --arm pcgb --n_train 512 --seed 0
+--arch resnet --out_dir resnet --dataset ks1d --arm mask_only --n_train 512 --seed 0
+--arch resnet --out_dir resnet --dataset ks1d --arm mask_only --n_train 2048 --seed 0
+--arch resnet --out_dir resnet --dataset kolmo2d --arm mask_only --n_train 512 --seed 0
+--arch resnet --out_dir resnet --dataset kolmo2d --arm mask_only --n_train 2048 --seed 0
+--arch resnet --out_dir resnet --dataset ks1d --arm reweight_only --n_train 512 --seed 0
+--arch resnet --out_dir resnet --dataset ks1d --arm reweight_only --n_train 2048 --seed 0
+--arch resnet --out_dir resnet --dataset kolmo2d --arm reweight_only --n_train 512 --seed 0
+--arch resnet --out_dir resnet --dataset kolmo2d --arm reweight_only --n_train 2048 --seed 0
+--arch resnet --out_dir resnet --dataset denoise --arm reweight_only --n_train 512 --seed 0
+--arch resnet --out_dir resnet --dataset grayscott2d --arm reweight_only --n_train 512 --seed 0
+--arch resnet --out_dir resnet --dataset ks1d --arm pcgb --n_train 128 --seed 0 --warm_frac 0.5
+--arch resnet --out_dir resnet --dataset ks1d --arm pcgb --n_train 512 --seed 0 --warm_frac 0.5
+--arch resnet --out_dir resnet --dataset kolmo2d --arm pcgb --n_train 128 --seed 0 --warm_frac 0.5
+--arch resnet --out_dir resnet --dataset denoise --arm pcgb --n_train 512 --seed 0 --warm_frac 0.5
+--arch resnet --out_dir resnet --dataset grayscott2d --arm pcgb --n_train 512 --seed 0 --warm_frac 0.5
+--arch resnet --out_dir resnet --dataset ks1d --arm baseline --n_train 128 --seed 1
+--arch resnet --out_dir resnet --dataset ks1d --arm baseline --n_train 2048 --seed 1
+--arch resnet --out_dir resnet --dataset kolmo2d --arm baseline --n_train 128 --seed 1
+--arch resnet --out_dir resnet --dataset kolmo2d --arm baseline --n_train 2048 --seed 1
+--arch resnet --out_dir resnet --dataset ks1d --arm stochdepth --n_train 128 --seed 1
+--arch resnet --out_dir resnet --dataset ks1d --arm pcgb --n_train 128 --seed 1
+--arch resnet --out_dir resnet --dataset ks1d --arm stochdepth --n_train 512 --seed 1
+--arch resnet --out_dir resnet --dataset ks1d --arm pcgb --n_train 512 --seed 1
+--arch resnet --out_dir resnet --dataset ks1d --arm stochdepth --n_train 2048 --seed 1
+--arch resnet --out_dir resnet --dataset ks1d --arm pcgb --n_train 2048 --seed 1
+--arch resnet --out_dir resnet --dataset kolmo2d --arm stochdepth --n_train 128 --seed 1
+--arch resnet --out_dir resnet --dataset kolmo2d --arm pcgb --n_train 128 --seed 1
+--arch resnet --out_dir resnet --dataset kolmo2d --arm stochdepth --n_train 512 --seed 1
+--arch resnet --out_dir resnet --dataset kolmo2d --arm pcgb --n_train 512 --seed 1
+--arch resnet --out_dir resnet --dataset kolmo2d --arm stochdepth --n_train 2048 --seed 1
+--arch resnet --out_dir resnet --dataset kolmo2d --arm pcgb --n_train 2048 --seed 1
+--arch resnet --out_dir resnet --dataset denoise --arm stochdepth --n_train 512 --seed 1
+--arch resnet --out_dir resnet --dataset denoise --arm pcgb --n_train 512 --seed 1
+--arch resnet --out_dir resnet --dataset grayscott2d --arm stochdepth --n_train 512 --seed 1
+--arch resnet --out_dir resnet --dataset grayscott2d --arm pcgb --n_train 512 --seed 1
+--arch resnet --out_dir resnet --dataset ks1d --arm mask_only --n_train 512 --seed 1
+--arch resnet --out_dir resnet --dataset ks1d --arm mask_only --n_train 2048 --seed 1
+--arch resnet --out_dir resnet --dataset kolmo2d --arm mask_only --n_train 512 --seed 1
+--arch resnet --out_dir resnet --dataset kolmo2d --arm mask_only --n_train 2048 --seed 1
+--arch resnet --out_dir resnet --dataset ks1d --arm reweight_only --n_train 512 --seed 1
+--arch resnet --out_dir resnet --dataset ks1d --arm reweight_only --n_train 2048 --seed 1
+--arch resnet --out_dir resnet --dataset kolmo2d --arm reweight_only --n_train 512 --seed 1
+--arch resnet --out_dir resnet --dataset kolmo2d --arm reweight_only --n_train 2048 --seed 1
+--arch resnet --out_dir resnet --dataset denoise --arm reweight_only --n_train 512 --seed 1
+--arch resnet --out_dir resnet --dataset grayscott2d --arm reweight_only --n_train 512 --seed 1
+--arch resnet --out_dir resnet --dataset ks1d --arm pcgb --n_train 128 --seed 1 --warm_frac 0.5
+--arch resnet --out_dir resnet --dataset ks1d --arm pcgb --n_train 512 --seed 1 --warm_frac 0.5
+--arch resnet --out_dir resnet --dataset kolmo2d --arm pcgb --n_train 128 --seed 1 --warm_frac 0.5
+--arch resnet --out_dir resnet --dataset denoise --arm pcgb --n_train 512 --seed 1 --warm_frac 0.5
+--arch resnet --out_dir resnet --dataset grayscott2d --arm pcgb --n_train 512 --seed 1 --warm_frac 0.5
+--arch resnet --out_dir resnet --dataset ks1d --arm baseline --n_train 128 --seed 2
+--arch resnet --out_dir resnet --dataset ks1d --arm baseline --n_train 2048 --seed 2
+--arch resnet --out_dir resnet --dataset kolmo2d --arm baseline --n_train 128 --seed 2
+--arch resnet --out_dir resnet --dataset kolmo2d --arm baseline --n_train 2048 --seed 2
+--arch resnet --out_dir resnet --dataset ks1d --arm stochdepth --n_train 128 --seed 2
+--arch resnet --out_dir resnet --dataset ks1d --arm pcgb --n_train 128 --seed 2
+--arch resnet --out_dir resnet --dataset ks1d --arm stochdepth --n_train 512 --seed 2
+--arch resnet --out_dir resnet --dataset ks1d --arm pcgb --n_train 512 --seed 2
+--arch resnet --out_dir resnet --dataset ks1d --arm stochdepth --n_train 2048 --seed 2
+--arch resnet --out_dir resnet --dataset ks1d --arm pcgb --n_train 2048 --seed 2
+--arch resnet --out_dir resnet --dataset kolmo2d --arm stochdepth --n_train 128 --seed 2
+--arch resnet --out_dir resnet --dataset kolmo2d --arm pcgb --n_train 128 --seed 2
+--arch resnet --out_dir resnet --dataset kolmo2d --arm stochdepth --n_train 512 --seed 2
+--arch resnet --out_dir resnet --dataset kolmo2d --arm pcgb --n_train 512 --seed 2
+--arch resnet --out_dir resnet --dataset kolmo2d --arm stochdepth --n_train 2048 --seed 2
+--arch resnet --out_dir resnet --dataset kolmo2d --arm pcgb --n_train 2048 --seed 2
+--arch resnet --out_dir resnet --dataset denoise --arm stochdepth --n_train 512 --seed 2
+--arch resnet --out_dir resnet --dataset denoise --arm pcgb --n_train 512 --seed 2
+--arch resnet --out_dir resnet --dataset grayscott2d --arm stochdepth --n_train 512 --seed 2
+--arch resnet --out_dir resnet --dataset grayscott2d --arm pcgb --n_train 512 --seed 2
+--arch resnet --out_dir resnet --dataset ks1d --arm mask_only --n_train 512 --seed 2
+--arch resnet --out_dir resnet --dataset ks1d --arm mask_only --n_train 2048 --seed 2
+--arch resnet --out_dir resnet --dataset kolmo2d --arm mask_only --n_train 512 --seed 2
+--arch resnet --out_dir resnet --dataset kolmo2d --arm mask_only --n_train 2048 --seed 2
+--arch resnet --out_dir resnet --dataset ks1d --arm reweight_only --n_train 512 --seed 2
+--arch resnet --out_dir resnet --dataset ks1d --arm reweight_only --n_train 2048 --seed 2
+--arch resnet --out_dir resnet --dataset kolmo2d --arm reweight_only --n_train 512 --seed 2
+--arch resnet --out_dir resnet --dataset kolmo2d --arm reweight_only --n_train 2048 --seed 2
+--arch resnet --out_dir resnet --dataset denoise --arm reweight_only --n_train 512 --seed 2
+--arch resnet --out_dir resnet --dataset grayscott2d --arm reweight_only --n_train 512 --seed 2
+--arch resnet --out_dir resnet --dataset ks1d --arm pcgb --n_train 128 --seed 2 --warm_frac 0.5
+--arch resnet --out_dir resnet --dataset ks1d --arm pcgb --n_train 512 --seed 2 --warm_frac 0.5
+--arch resnet --out_dir resnet --dataset kolmo2d --arm pcgb --n_train 128 --seed 2 --warm_frac 0.5
+--arch resnet --out_dir resnet --dataset denoise --arm pcgb --n_train 512 --seed 2 --warm_frac 0.5
+--arch resnet --out_dir resnet --dataset grayscott2d --arm pcgb --n_train 512 --seed 2 --warm_frac 0.5

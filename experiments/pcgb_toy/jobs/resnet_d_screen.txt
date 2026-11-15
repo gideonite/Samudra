@@ -1,0 +1,31 @@
+# ResNet stage d: Phase-2 screen on pcgb v1 (one flag each) + stochdepth p_L=0.5; ks1d/kolmo2d n=512
+--arch resnet --out_dir resnet --dataset ks1d --arm pcgb --n_train 512 --seed 0 --mask_rule random
+--arch resnet --out_dir resnet --dataset ks1d --arm pcgb --n_train 512 --seed 0 --norepeat 2
+--arch resnet --out_dir resnet --dataset ks1d --arm pcgb --n_train 512 --seed 0 --mask_target blocks
+--arch resnet --out_dir resnet --dataset ks1d --arm pcgb --n_train 512 --seed 0 --mask_exclude_all_drop
+--arch resnet --out_dir resnet --dataset ks1d --arm stochdepth --n_train 512 --seed 0 --sd_block_p_res 0.5
+--arch resnet --out_dir resnet --dataset kolmo2d --arm pcgb --n_train 512 --seed 0 --mask_rule random
+--arch resnet --out_dir resnet --dataset kolmo2d --arm pcgb --n_train 512 --seed 0 --norepeat 2
+--arch resnet --out_dir resnet --dataset kolmo2d --arm pcgb --n_train 512 --seed 0 --mask_target blocks
+--arch resnet --out_dir resnet --dataset kolmo2d --arm pcgb --n_train 512 --seed 0 --mask_exclude_all_drop
+--arch resnet --out_dir resnet --dataset kolmo2d --arm stochdepth --n_train 512 --seed 0 --sd_block_p_res 0.5
+--arch resnet --out_dir resnet --dataset ks1d --arm pcgb --n_train 512 --seed 1 --mask_rule random
+--arch resnet --out_dir resnet --dataset ks1d --arm pcgb --n_train 512 --seed 1 --norepeat 2
+--arch resnet --out_dir resnet --dataset ks1d --arm pcgb --n_train 512 --seed 1 --mask_target blocks
+--arch resnet --out_dir resnet --dataset ks1d --arm pcgb --n_train 512 --seed 1 --mask_exclude_all_drop
+--arch resnet --out_dir resnet --dataset ks1d --arm stochdepth --n_train 512 --seed 1 --sd_block_p_res 0.5
+--arch resnet --out_dir resnet --dataset kolmo2d --arm pcgb --n_train 512 --seed 1 --mask_rule random
+--arch resnet --out_dir resnet --dataset kolmo2d --arm pcgb --n_train 512 --seed 1 --norepeat 2
+--arch resnet --out_dir resnet --dataset kolmo2d --arm pcgb --n_train 512 --seed 1 --mask_target blocks
+--arch resnet --out_dir resnet --dataset kolmo2d --arm pcgb --n_train 512 --seed 1 --mask_exclude_all_drop
+--arch resnet --out_dir resnet --dataset kolmo2d --arm stochdepth --n_train 512 --seed 1 --sd_block_p_res 0.5
+--arch resnet --out_dir resnet --dataset ks1d --arm pcgb --n_train 512 --seed 2 --mask_rule random
+--arch resnet --out_dir resnet --dataset ks1d --arm pcgb --n_train 512 --seed 2 --norepeat 2
+--arch resnet --out_dir resnet --dataset ks1d --arm pcgb --n_train 512 --seed 2 --mask_target blocks
+--arch resnet --out_dir resnet --dataset ks1d --arm pcgb --n_train 512 --seed 2 --mask_exclude_all_drop
+--arch resnet --out_dir resnet --dataset ks1d --arm stochdepth --n_train 512 --seed 2 --sd_block_p_res 0.5
+--arch resnet --out_dir resnet --dataset kolmo2d --arm pcgb --n_train 512 --seed 2 --mask_rule random
+--arch resnet --out_dir resnet --dataset kolmo2d --arm pcgb --n_train 512 --seed 2 --norepeat 2
+--arch resnet --out_dir resnet --dataset kolmo2d --arm pcgb --n_train 512 --seed 2 --mask_target blocks
+--arch resnet --out_dir resnet --dataset kolmo2d --arm pcgb --n_train 512 --seed 2 --mask_exclude_all_drop
+--arch resnet --out_dir resnet --dataset kolmo2d --arm stochdepth --n_train 512 --seed 2 --sd_block_p_res 0.5

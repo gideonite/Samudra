@@ -1,5 +1,5 @@
 """FINAL test-split table. The study's only use of the test split: no selection may be based on it.
-Usage: python final_test.py   (single process, 1 thread). Writes runs/_final_test.json and final_table.md.
+Usage: python final_test.py [--out_dir DIR]   (single process, 1 thread; DIR default = this folder, e.g. resnet). Writes DIR/runs/_final_test.json and DIR/final_table.md.
 For each saved run: load model.pt + args.json, re-evaluate on val and require it to match the logged `final` val metric
 (1e-6), then evaluate on test. Runs are grouped by args.json (dataset, arm, n_train, seed, non-default flags), not by tag."""
 import glob, json, math, os, sys
@@ -10,7 +10,7 @@ import prepare, train
 HERE = Path(__file__).parent
 TOL = 1e-6
 DFLT = vars(train.get_args([]))
-IGN = {"tag", "out_dir", "dataset", "arm", "n_train", "seed", "log_grad_norms"}  # bookkeeping-only flags
+IGN = {"tag", "out_dir", "dataset", "arm", "n_train", "seed", "log_grad_norms", "arch"}  # bookkeeping-only flags
 CLOBBERED_SUFFIX = "c084f4f"  # Phase-2 screen-1 dirs whose tags had no flag hash: overwritten, exclude
 WARM = {"warm_frac": 0.5, "ensemble_topk": 3}
 ARMS = ["baseline", "stochdepth", "mask_only", "reweight_only", "pcgb", "pcgb_warm"]
@@ -23,7 +23,7 @@ def classify(a):
     nd = {k: a[k] for k in a if k in DFLT and k not in IGN and a[k] != DFLT[k]}
     if not nd:
         return a["arm"]
-    if a["arm"] == "pcgb" and nd == WARM:
+    if a["arm"] == "pcgb" and nd in (WARM, {"warm_frac": 0.5}):
         return "pcgb_warm"
     return None
 
@@ -42,6 +42,9 @@ def same(x, y, tol):
 
 
 def main():
+    global HERE
+    import argparse
+    ap = argparse.ArgumentParser(); ap.add_argument("--out_dir", default=str(HERE)); HERE = Path(ap.parse_args().out_dir).resolve()
     torch.set_num_threads(1)
     skipped, found = [], {}
     for d in sorted(glob.glob(str(HERE / "runs" / "*"))):
@@ -65,7 +68,7 @@ def main():
         data = prepare.load(ds); meta = data["meta"]
         for key in sorted(k for k in found if k[0] == ds):
             b, a, fin = found[key][0]
-            m = train.build_model(meta, a["width"], a["drop_mode"])
+            m = train.model_from_cfg(meta, a)
             m.load_state_dict(torch.load(HERE / "runs" / b / "model.pt", map_location="cpu")); m.eval()
             with torch.no_grad():
                 ev = prepare.evaluate(m, ds, "val")

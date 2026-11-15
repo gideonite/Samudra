@@ -1,4 +1,4 @@
-"""PCGB toy study: ConvNeXt U-Net (generic 1D/2D) + five training arms under a wall-clock budget.
+"""PCGB toy study: ConvNeXt U-Net or isotropic ConvNeXt ResNet (--arch, generic 1D/2D) + training arms under a wall-clock budget.
 
 Arms: baseline | stochdepth | mask_only | reweight_only | pcgb  (see program.md for the method).
 
@@ -10,6 +10,10 @@ Conventions
 - Rounds are wall-clock slices: round t ends when elapsed >= (t+1) * budget / n_rounds, so every arm
   (including baseline/stochdepth, which just log) shares the same slicing; K (steps/round) is whatever fits.
   Scoring + reweighting time is spent inside the slice, i.e. it is charged to the budget.
+- --arch resnet: isotropic full-resolution body of 12 ConvNeXt Blocks in 4 contiguous groups of 3. Skip-mask bit g (g=0..3) =
+  1 means group g (blocks 3g..3g+2) is KEPT; 0 drops all 3 residual branches (identity). Mask 15 = full net, mask 0 = stem->head.
+  block_mask has 12 entries (one per block); model.n_blocks / model.block_names give the count/names for either arch.
+  Only drop_mode=zero is defined for resnet. ResNet stochdepth: p_l = sd_block_p_res*(l+1)/12, no skip drop.
 - Mask candidates (--mask_target): skips = 16 skip masks (id = mask id); blocks = 11 (0 = all-keep, 1+b = block b removed);
   both = 16 skip masks + 10 single-block removals (id 16+b). Names via cand_names().
 - Weights (--weight_mode): sample = D[i] per training sample (v1); pixel = W over (C, *spatial) positions.
@@ -27,7 +31,9 @@ import prepare
 
 HERE = Path(__file__).resolve().parent
 ARMS = ["baseline", "stochdepth", "mask_only", "reweight_only", "pcgb", "gboost"]
-N_SKIPS, N_BLOCKS = 4, 10
+N_SKIPS, N_BLOCKS = 4, 10  # U-Net constants; use model.n_blocks / model.block_names for arch-agnostic code
+RES_BLOCKS, RES_GROUPS = 12, 4
+ARCHS = ["unet", "resnet"]
 
 
 # ----------------------------------------------------------------------------- model
@@ -50,13 +56,18 @@ class Block(nn.Module):
         self.norm = nn.GroupNorm(1, c)
         self.pw1, self.pw2 = conv(c, 4 * c, 1), conv(4 * c, c, 1)
 
+    def branch(self, x):
+        return self.pw2(F.gelu(self.pw1(self.norm(self.dw(x)))))
+
     def forward(self, x, scale=1.0):
         if isinstance(scale, float) and scale == 0.0:
             return x  # dropped: residual branch contributes 0
-        return x + scale * self.pw2(F.gelu(self.pw1(self.norm(self.dw(x)))))
+        return x + scale * self.branch(x)
 
 
 class UNet(nn.Module):
+    n_blocks, block_names = N_BLOCKS, BLOCK_NAMES
+
     def __init__(self, meta, width=10, drop_mode="zero"):
         super().__init__()
         nd, cin, per = meta["ndim"], meta["channels"], meta["periodic"]
@@ -107,6 +118,51 @@ class UNet(nn.Module):
         return self.decode(x, h, skips, sm, bm)
 
 
+class ResNet(nn.Module):
+    """Isotropic ConvNeXt ResNet: stem -> 12 Blocks (all width C, full resolution, 4 groups of 3) -> head, x + head(h).
+    skip_mask (4 entries) scales whole groups, block_mask (12 entries) single blocks; branch scale = group * block (0 -> identity).
+    `skip_gnorm` (when track_grads) = per-group residual-branch gradient norm sqrt(sum_blocks ||dL/d branch_out||^2)."""
+    n_blocks, block_names = RES_BLOCKS, [f"g{i // 3}b{i}" for i in range(RES_BLOCKS)]
+    n_groups, group_size = RES_GROUPS, RES_BLOCKS // RES_GROUPS
+
+    def __init__(self, meta, width, drop_mode="zero"):
+        super().__init__()
+        if drop_mode != "zero": raise ValueError(f"--arch resnet only supports drop_mode=zero (got {drop_mode!r}): dropped group = identity")
+        nd, cin, per = meta["ndim"], meta["channels"], meta["periodic"]
+        k = 7 if nd == 1 else 5
+        conv = (nn.Conv1d, nn.Conv2d)[nd - 1]
+        self.drop_mode = drop_mode
+        self.stem = conv(cin, width, 3, padding=1, padding_mode="circular" if per else "zeros")
+        self.blocks = nn.ModuleList([Block(width, nd, k, per) for _ in range(RES_BLOCKS)])
+        self.head = conv(width, cin, 1)
+        with torch.no_grad():
+            self.head.weight.mul_(0.1), self.head.bias.zero_()
+        self.track_grads = False
+        self._gsq = [0.0] * RES_GROUPS
+
+    @property
+    def skip_gnorm(self):
+        return [math.sqrt(v) for v in self._gsq]
+
+    def encode(self, x, bm=None):
+        """Mask-independent prefix (the stem) -- cacheable across candidate masks."""
+        return self.stem(x)
+
+    def forward(self, x, skip_mask=None, block_mask=None, enc=None):
+        sm, bm = UNet._scales(skip_mask, RES_GROUPS), UNet._scales(block_mask, RES_BLOCKS)
+        h = enc if enc is not None else self.stem(x)
+        track = self.track_grads
+        if track: self._gsq = [0.0] * RES_GROUPS
+        for l, blk in enumerate(self.blocks):
+            s = sm[l // self.group_size] * bm[l]
+            if s == 0.0: continue  # dropped: identity
+            r = blk.branch(h)
+            if track and r.requires_grad:
+                r.register_hook(lambda g, gi=l // self.group_size: self._gsq.__setitem__(gi, self._gsq[gi] + float(g.norm()) ** 2))
+            h = h + s * r
+        return x + self.head(h)  # residual prediction
+
+
 def mask_bools(m):
     return [bool((m >> i) & 1) for i in range(N_SKIPS)]
 
@@ -116,10 +172,10 @@ class Cands(list):
     def __init__(self, items, names, keep): super().__init__(items); self.names, self.keep = names, keep
 
 
-def make_cands(target):
+def make_cands(target, n_blocks=N_BLOCKS, block_names=BLOCK_NAMES):
     sk = [(mask_bools(m), None) for m in range(16)]
-    bl = [([True] * N_SKIPS, [i != b for i in range(N_BLOCKS)]) for b in range(N_BLOCKS)]
-    sn, bn = [f"s{m:04b}" for m in range(16)], [f"-{n}" for n in BLOCK_NAMES]
+    bl = [([True] * N_SKIPS, [i != b for i in range(n_blocks)]) for b in range(n_blocks)]
+    sn, bn = [f"s{m:04b}" for m in range(16)], [f"-{n}" for n in block_names]
     if target == "skips": return Cands(sk, sn, 15)
     if target == "blocks": return Cands([([True] * N_SKIPS, None)] + bl, ["keep"] + bn, 0)
     return Cands(sk + bl, sn + bn, 15)
@@ -206,7 +262,7 @@ def score_round(model, args, pools, D, rnd, cands):
     def se(xx, yy, c, enc=None):
         sk, bk = cands[c]
         return (model(xx, skip_mask=sk, block_mask=bk, enc=enc if bk is None else None) - yy) ** 2
-    enc = model.encode(x, [1.0] * N_BLOCKS)  # encoder is mask-independent for skip masks: compute once
+    enc = model.encode(x, [1.0] * model.n_blocks)  # encoder is mask-independent for skip masks: compute once
     se_full = se(x, y, cands.keep, enc)
     if H > 1:
         se_full, xr = 0.0, x
@@ -229,7 +285,7 @@ def score_round(model, args, pools, D, rnd, cands):
         else:
             if args.mask_score_hiw: raise ValueError("--mask_score_hiw needs D on the scoring pool (score_on train or rw_on heldout)")
             xc, yc = pools["calib"][0][: args.score_n], pools["calib"][1][: args.score_n]
-            encc = model.encode(xc, [1.0] * N_BLOCKS)
+            encc = model.encode(xc, [1.0] * model.n_blocks)
             S = torch.stack([se(xc, yc, c, encc).flatten(1).mean(1).mean() for c in range(len(cands))])
     model.train()
     return ridx, e, S
@@ -304,7 +360,7 @@ def ensemble_eval(model, name, calib, K):
     nets (averaged at every autoregressive step) on val. Returns log fields."""
     model.eval()
     with torch.no_grad():
-        xc, yc = calib; enc = model.encode(xc, [1.0] * N_BLOCKS)
+        xc, yc = calib; enc = model.encode(xc, [1.0] * model.n_blocks)
         S = [float(((model(xc, skip_mask=mask_bools(m), enc=enc) - yc) ** 2).mean()) for m in range(15)]
         ms = sorted(range(15), key=S.__getitem__)[:K]
         out = prepare.evaluate(lambda x: torch.stack([model(x, skip_mask=mask_bools(m)) for m in ms]).mean(0), name, split="val")
@@ -312,12 +368,30 @@ def ensemble_eval(model, name, calib, K):
     return dict(ens_metric=out["metric"], ens_onestep_mse=out["onestep_mse"], ens_masks=ms, ens_S=[S[m] for m in ms])
 
 
-def build_model(meta, width=10, drop_mode="zero"):
-    return UNet(meta, width, drop_mode)
+def build_model(meta, width=10, drop_mode="zero", arch="unet"):
+    return UNet(meta, width, drop_mode) if arch == "unet" else ResNet(meta, width, drop_mode)
 
 
-def count_params(meta, width, drop_mode="zero"):
-    return sum(p.numel() for p in build_model(meta, width, drop_mode).parameters())
+def count_params(meta, width, drop_mode="zero", arch="unet"):
+    return sum(p.numel() for p in build_model(meta, width, drop_mode, arch).parameters())
+
+
+def resolve_width(meta, arch, width=10, res_width=0, drop_mode="zero"):
+    """Model width actually built. unet: --width. resnet: --res_width, or (0 = auto) the C whose param count is closest to the
+    U-Net(width=--width) for this dataset."""
+    if arch == "unet": return width
+    if res_width > 0: return res_width
+    target = count_params(meta, width, drop_mode, "unet")
+    return min(range(8, 97), key=lambda c: abs(count_params(meta, c, "zero", "resnet") - target))
+
+
+def width_from_cfg(meta, cfg):
+    """Model width for a saved run's args.json (old U-Net runs lack arch/model_width)."""
+    return cfg.get("model_width") or resolve_width(meta, cfg.get("arch", "unet"), cfg["width"], cfg.get("res_width", 0), cfg["drop_mode"])
+
+
+def model_from_cfg(meta, cfg):
+    return build_model(meta, width_from_cfg(meta, cfg), cfg["drop_mode"], cfg.get("arch", "unet"))
 
 
 def run_gboost(args, meta, X, Y, run_dir, log, commit, tag):
@@ -327,19 +401,21 @@ def run_gboost(args, meta, X, Y, run_dir, log, commit, tag):
     represent a small correction. F_K(x) = h_1(x) + nu * sum_{k>=2} h_k(x). Same AdamW, loss (mse), cosine LR (per stage), clip.
     F_{k-1}(X) over the (fixed, small) train set is computed once per stage under no_grad and cached (identical to recomputing)."""
     K = args.gb_stages
-    p_base = count_params(meta, args.width, args.drop_mode)
+    arch = args.arch
+    bw = resolve_width(meta, arch, args.width, args.res_width, args.drop_mode)  # baseline model width
+    p_base = count_params(meta, bw, args.drop_mode, arch)
     if args.gb_width > 0: w = args.gb_width
-    else: w = min(range(2, 4 * args.width + 1), key=lambda c: abs(K * count_params(meta, c, args.drop_mode) - p_base))
-    p_stage = count_params(meta, w, args.drop_mode); p_tot = K * p_stage
-    print(f"gboost: K={K} stage_width={w} params/stage={p_stage} total={p_tot} baseline(width={args.width})={p_base} "
+    else: w = min(range(2, (4 * args.width if arch == "unet" else bw) + 1), key=lambda c: abs(K * count_params(meta, c, args.drop_mode, arch) - p_base))
+    p_stage = count_params(meta, w, args.drop_mode, arch); p_tot = K * p_stage
+    print(f"gboost: K={K} stage_width={w} params/stage={p_stage} total={p_tot} baseline(width={bw})={p_base} "
           f"ratio={p_tot / p_base:.3f}", flush=True)
     if abs(p_tot / p_base - 1) > 0.15: print("WARNING: total params differ from baseline by >15%", flush=True)
     torch.manual_seed(args.seed)
-    stages = [build_model(meta, w, args.drop_mode).train() for _ in range(K)]
+    stages = [build_model(meta, w, args.drop_mode, arch).train() for _ in range(K)]
     n, bs = len(X), min(args.bs, len(X))
     sampler = Sampler(n, bs, args.seed)
     log(type="config", **vars(args), n_params=p_tot, stage_width=w, params_per_stage=p_stage, base_params=p_base, commit=commit)
-    (run_dir / "args.json").write_text(json.dumps({**vars(args), "n_params": p_tot, "stage_width": w, "meta_ndim": meta["ndim"]}))
+    (run_dir / "args.json").write_text(json.dumps({**vars(args), "n_params": p_tot, "stage_width": w, "model_width": bw, "meta_ndim": meta["ndim"]}))
 
     def h(k, x):  # contribution of stage k (0-based) incl. shrinkage
         return stages[k](x) if k == 0 else args.gb_nu * (stages[k](x) - x)
@@ -419,6 +495,8 @@ def run_gboost(args, meta, X, Y, run_dir, log, commit, tag):
 def get_args(argv=None):
     p = argparse.ArgumentParser()
     p.add_argument("--dataset", default="ks1d"); p.add_argument("--arm", choices=ARMS, default="baseline")
+    p.add_argument("--arch", choices=ARCHS, default="unet", help="unet = ConvNeXt U-Net; resnet = isotropic 12-block ConvNeXt ResNet (see module doc)")
+    p.add_argument("--res_width", type=int, default=0, help="resnet width C (0 = auto: params within ~10%% of the U-Net with --width)")
     p.add_argument("--n_train", type=int, default=512); p.add_argument("--seed", type=int, default=0)
     p.add_argument("--budget_s", type=float, default=720); p.add_argument("--tag", default=None)
     p.add_argument("--out_dir", default=str(HERE), help="where runs/ and results.tsv live")
@@ -435,6 +513,7 @@ def get_args(argv=None):
     p.add_argument("--reset_adam", action="store_true", help="re-create AdamW at every round (default: keep state)")
     p.add_argument("--sd_skip_p", type=float, default=0.2, help="stochdepth: skip drop prob")
     p.add_argument("--sd_block_p", type=float, default=0.1, help="stochdepth: block p_l = sd_block_p*(l+1)/10")
+    p.add_argument("--sd_block_p_res", type=float, default=0.2, help="resnet stochdepth: p_l = sd_block_p_res*(l+1)/12 (last block = this)")
     p.add_argument("--log_grad_norms", type=int, default=0, help="every N steps log block/skip grad norms (0=off)")
     # ---- Phase 2 flags (defaults = v1 behaviour)
     p.add_argument("--rw_norm", choices=["max", "p95", "rank"], default="max", help="residual normalisation for L (see reweight)")
@@ -473,29 +552,32 @@ def main(args):
     meta = prepare.load(name)["meta"]
     X, Y = prepare.get_train_pairs(name, args.n_train, args.seed)
     calib = prepare.get_calib_pairs(name, 256, 0)
+    if args.arch == "resnet" and args.drop_mode != "zero": raise ValueError("--arch resnet only supports --drop_mode zero")
     if args.rw_kind == "gb" and args.weight_mode == "pixel": raise ValueError("--rw_kind gb is sample-mode only (no pixel mode)")
     if arm == "gboost":
         fin, wall, notes, step, diverged = run_gboost(args, meta, X, Y, run_dir, log, commit, tag)
-        extra = [f"{k}={getattr(args, k)}" for k, d in (("gb_stages", 4), ("gb_width", 0), ("gb_nu", 1.0), ("lr", 1e-3)) if getattr(args, k) != d]
+        extra = [f"{k}={getattr(args, k)}" for k, d in (("arch", "unet"), ("res_width", 0), ("gb_stages", 4), ("gb_width", 0), ("gb_nu", 1.0), ("lr", 1e-3)) if getattr(args, k) != d]
         append_row(Path(args.out_dir) / "results.tsv", [commit, name, arm, args.n_train, args.seed, f"{fin['metric']:.6g}",
                    f"{fin['onestep_mse']:.6g}", f"{wall:.1f}", " ".join(notes + extra)])
         print(f"{tag}: metric={fin['metric']:.5g} onestep={fin['onestep_mse']:.5g} steps={step} {' '.join(notes)}")
         if diverged: sys.exit(1)
         return
     if args.mask_exclude_all_drop and args.mask_target == "blocks": raise ValueError("blocks target has no all-drop candidate")
-    cands = make_cands(args.mask_target)
+    model_width = resolve_width(meta, args.arch, args.width, args.res_width, args.drop_mode)
+    model = build_model(meta, model_width, args.drop_mode, args.arch).train()
+    cands = make_cands(args.mask_target, model.n_blocks, model.block_names)
     pools = {"train": (X, Y, None), "calib": (*calib, None)}
     if args.rw_rollout > 1:
         pools = {k: (*v[:2], pair_positions(name, k, len(v[0]), args.seed if k == "train" else 0)) for k, v in pools.items()}
         for k, v in pools.items(): assert torch.equal(v[2][0][v[2][1], v[2][2]], v[0]), "pair_positions drifted from prepare"
     n, bs = len(X), min(args.bs, len(X))
-    model = build_model(meta, args.width, args.drop_mode).train()
     n_params = sum(p.numel() for p in model.parameters())
+    print(f"arch={args.arch} model_width={model_width} n_params={n_params} n_blocks={model.n_blocks}", flush=True)
     mk_opt = lambda: torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.wd)
     opt, sampler = mk_opt(), Sampler(n, bs, args.seed)
     rng = random.Random(args.seed); gen = torch.Generator().manual_seed(args.seed + 1)
-    (run_dir / "args.json").write_text(json.dumps({**vars(args), "n_params": n_params, "meta_ndim": meta["ndim"]}))
-    log(type="config", **vars(args), n_params=n_params, commit=commit)
+    (run_dir / "args.json").write_text(json.dumps({**vars(args), "n_params": n_params, "model_width": model_width, "meta_ndim": meta["ndim"]}))
+    log(type="config", **vars(args), n_params=n_params, model_width=model_width, commit=commit)
 
     use_mask, use_rw = arm in ("mask_only", "pcgb"), arm in ("reweight_only", "pcgb")
     n_w = int(np.prod([meta["channels"], *meta["spatial"]])) if args.weight_mode == "pixel" else (len(calib[0]) if args.rw_on == "heldout" else n)
@@ -539,7 +621,12 @@ def main(args):
         for g in opt.param_groups: g["lr"] = lr_at(el / args.budget_s, args.lr)
         b = sampler.next(); xb, yb = X[b], Y[b]
         sk, bk = cands[mask]
-        if arm == "stochdepth":
+        if arm == "stochdepth" and args.arch == "resnet":  # linear rule, no separate skip drop, 1/(1-p) train-time rescale
+            nb = model.n_blocks
+            pb = torch.tensor([args.sd_block_p_res * (l + 1) / nb for l in range(nb)])
+            sk = [1.0] * N_SKIPS
+            bk = ((torch.rand(nb, generator=gen) >= pb).float() / (1 - pb)).tolist()
+        elif arm == "stochdepth":
             ps = torch.tensor([args.sd_skip_p] * N_SKIPS)
             pb = torch.tensor([args.sd_block_p * (l + 1) / N_BLOCKS for l in range(N_BLOCKS)])
             kp = args.drop_mode in ("rescale", "learned")  # these need binary 0/1 skip masks, not 1/(1-p) scaling
@@ -588,7 +675,7 @@ def main(args):
              ("drop_mode", "zero"), ("lr", 1e-3), ("width", 10), ("reset_adam", False),
              ("rw_norm", "max"), ("beta_cap", 1.0), ("rw_sq", False), ("rw_on", "train"), ("norepeat", 0), ("mask_exclude_all_drop", False),
              ("mask_score_hiw", 0.0), ("mask_target", "skips"), ("weight_mode", "sample"), ("warm_frac", 0.0),
-             ("ensemble_topk", 0), ("rw_rollout", 1), ("rw_kind", "adaboost"), ("gb_stages", 4), ("gb_width", 0), ("gb_nu", 1.0), ("n_rounds", 30), ("score_n", 128), ("mask_temp", 1.0)) if getattr(args, k) != d]
+             ("ensemble_topk", 0), ("rw_rollout", 1), ("rw_kind", "adaboost"), ("gb_stages", 4), ("gb_width", 0), ("gb_nu", 1.0), ("n_rounds", 30), ("score_n", 128), ("mask_temp", 1.0), ("arch", "unet"), ("res_width", 0), ("sd_block_p_res", 0.2)) if getattr(args, k) != d]
     append_row(out / "results.tsv", [commit, name, arm, args.n_train, args.seed, f"{fin['metric']:.6g}", f"{fin['onestep_mse']:.6g}",
                                     f"{wall:.1f}", " ".join(notes + extra)])
     print(f"{tag}: metric={fin['metric']:.5g} onestep={fin['onestep_mse']:.5g} steps={step} rounds={rnd} {' '.join(notes)}")

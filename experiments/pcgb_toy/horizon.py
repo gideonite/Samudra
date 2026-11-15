@@ -1,4 +1,4 @@
-"""Rollout-horizon analysis (50 steps) on the VAL split only. Usage: python horizon.py [--check]
+"""Rollout-horizon analysis (50 steps) on the VAL split only. Usage: python horizon.py [--check] [--out_dir DIR] [--ns 512,2048]   (DIR default = this folder; for DIR != this folder (e.g. resnet), runs are picked by args.json: default-flag configs)
 Loads runs/<tag>/model.pt, rolls out from ICs (every val traj x t0 in {0,5,10}), writes figs/horizon_<ds>_n<n>.png and
 runs/_horizon.json. Exploded = non-finite or |x|>20 anywhere in the field; the flag is sticky once raised.
 Error is computed on all ICs (non-finite predictions are mapped to +-1e6 so exploded rollouts show as huge nRMSE, not NaN;
@@ -10,15 +10,31 @@ import matplotlib; matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import prepare, train
 
-HERE = Path(__file__).parent
+HERE = Path(__file__).resolve().parent
+OUT = HERE
 H, T0S, EXPL = 50, (0, 5, 10), 20.0
 DATASETS, NS, SEEDS = ("ks1d", "kolmo2d"), (512, 2048), (0, 1, 2)
 ARMS = ("baseline", "stochdepth", "pcgb", "mask_only", "reweight_only")
 PHASE1_COMMITS = {"f5d18a7", "61a7986", "1a864ce", "f06f258", "87d1bc7", "52aac42", "a8895b9"}
 
 
+def find_run_cfg(ds, arm, n, s):
+    """Non-default-folder variant: the default-flag run (args.json) of this cell in OUT/runs (arch etc. ignored); asserts uniqueness."""
+    import final_test
+    c = []
+    for d in glob.glob(str(OUT / "runs" / "*")):
+        f = Path(d) / "args.json"
+        if not f.exists() or not (Path(d) / "model.pt").exists(): continue
+        a = json.loads(f.read_text())
+        if (a["dataset"], a["arm"], a["n_train"], a["seed"]) == (ds, arm, n, s) and not {k for k in a if k in final_test.DFLT and k not in final_test.IGN and a[k] != final_test.DFLT[k]}:
+            c.append(d)
+    assert len(c) <= 1, c
+    return c[0] if c else None
+
+
 def find_run(ds, arm, n, s):
     """Phase-1 run dir: regular tag (7-hex commit suffix, not a Phase-2 commit whose tags were overwritten); calib_* as fallback."""
+    if OUT != HERE: return find_run_cfg(ds, arm, n, s)
     cands = []
     for d in glob.glob(str(HERE / "runs" / f"{ds}_{arm}_n{n}_s{s}_*")):
         suf = os.path.basename(d).split("_")[-1]
@@ -79,8 +95,11 @@ def first_cross(c):
 
 def main():
     ap = argparse.ArgumentParser(); ap.add_argument("--check", action="store_true", help="also verify prepare.evaluate vs logged val metric")
+    ap.add_argument("--out_dir", default=str(HERE)); ap.add_argument("--ns", default="512,2048")
     a = ap.parse_args(); torch.set_num_threads(1)
-    (HERE / "figs").mkdir(exist_ok=True)
+    global OUT, NS
+    OUT = Path(a.out_dir).resolve(); NS = tuple(int(v) for v in a.ns.split(","))
+    (OUT / "figs").mkdir(exist_ok=True)
     out, missing, checks = {}, [], []
     for ds in DATASETS:
         d = prepare.load(ds); x0, tg = make_ics(d["val"]); meta = d["meta"]
@@ -93,7 +112,7 @@ def main():
                     rd = find_run(ds, arm, n, s)
                     if rd is None: missing.append((ds, arm, n, s)); continue
                     cfg = json.loads((Path(rd) / "args.json").read_text())
-                    m = train.build_model(meta, cfg["width"], cfg["drop_mode"])
+                    m = train.model_from_cfg(meta, cfg)
                     m.load_state_dict(torch.load(Path(rd) / "model.pt")); m.eval()
                     r = rollout(m, x0, tg); r.update(seed=s, run=os.path.basename(rd)); runs.append(r)
                     if a.check:
@@ -115,7 +134,7 @@ def main():
             row["n_seeds"] = len(runs); row["mean10"] = float(nr[:, :10].mean(axis=1).mean())
             table[key][arm] = row
     json.dump({"config": dict(H=H, t0s=T0S, explode_thresh=EXPL), "missing": missing, "summary": table, "curves": out},
-              open(HERE / "runs" / "_horizon.json", "w"), indent=1)
+              open(OUT / "runs" / "_horizon.json", "w"), indent=1)
     # figures
     cols = dict(baseline="#1f77b4", stochdepth="#2ca02c", pcgb="#d62728", mask_only="#ff7f0e", reweight_only="#9467bd")
     for key, res in out.items():
@@ -131,7 +150,7 @@ def main():
         ax[0].axhline(1, color="gray", lw=0.5); ax[0].set_yscale("log"); ax[0].set_title(f"{key}: per-step nRMSE (mean, min/max over seeds)")
         ax[1].axhline(1, color="gray", lw=0.5); ax[1].set_title("predicted/true field std"); ax[2].set_title(f"fraction exploded (|x|>{EXPL:g} or non-finite)")
         for A in ax: A.set_xlabel("rollout step"); A.grid(alpha=0.25)
-        ax[0].legend(fontsize=7); fig.tight_layout(); fig.savefig(HERE / "figs" / f"horizon_{key}.png", dpi=110); plt.close(fig)
+        ax[0].legend(fontsize=7); fig.tight_layout(); fig.savefig(OUT / "figs" / f"horizon_{key}.png", dpi=110); plt.close(fig)
     # table
     for key, t in table.items():
         print(f"\n== {key}  (persistence@1/10/50: " + "/".join(f"{out[key]['reference']['persistence']['nrmse'][k-1]:.2f}" for k in (1, 10, 50)) + ")")
