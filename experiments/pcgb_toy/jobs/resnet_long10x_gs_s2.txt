@@ -1,0 +1,3 @@
+--dataset grayscott2d --arm baseline --n_train 512 --seed 2 --arch resnet --out_dir resnet --budget_s 7200 --n_evals 12
+--dataset grayscott2d --arm stochdepth --n_train 512 --seed 2 --arch resnet --out_dir resnet --budget_s 7200 --n_evals 12
+--dataset grayscott2d --arm pcgb --n_rounds 100 --n_train 512 --seed 2 --arch resnet --out_dir resnet --budget_s 7200 --n_evals 12
