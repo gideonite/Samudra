@@ -188,3 +188,6 @@ f635756	ks1d	gboost	512	1	0.0667808	3.97301e-05	720.5	steps=6975 steps_per_s=9.7
 2d2de34	grayscott2d	baseline	512	0	0.420895	0.0118447	7201.0	rounds=29 steps=3071 steps_per_s=0.4 params=260852 arch=resnet
 2d2de34	grayscott2d	stochdepth	512	0	0.471191	0.0147245	7200.8	rounds=29 steps=3438 steps_per_s=0.5 params=260852 arch=resnet
 2d2de34	grayscott2d	pcgb	512	0	27.6408	0.0386615	7200.0	rounds=99 steps=233181 steps_per_s=32.4 params=260852 minH=0.990 n_rounds=100 arch=resnet
+2d2de34	kolmo2d	baseline	512	1	0.35943	0.021248	7201.8	rounds=29 steps=3033 steps_per_s=0.4 params=260351 arch=resnet
+2d2de34	kolmo2d	stochdepth	512	1	0.370547	0.0196122	7202.0	rounds=29 steps=3409 steps_per_s=0.5 params=260351 arch=resnet
+2d2de34	kolmo2d	pcgb	512	1	1.32324	0.114854	7200.0	rounds=99 steps=433949 steps_per_s=60.3 params=260351 MASK_COLLAPSE(m=0,85/99) minH=1.000 n_rounds=100 arch=resnet
