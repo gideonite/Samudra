@@ -116,6 +116,27 @@ def summarize(tag: str, s: dict[str, torch.Tensor], names: list[str]) -> dict:
     return out
 
 
+def parse_limit(value: str) -> float | None:
+    if value.lower() == "none":
+        return None
+    return float(value)
+
+
+def zero_init_decoder(model: torch.nn.Module) -> None:
+    """Zero the final output conv in place (keeps optimizer/EMA references valid)."""
+    decoder = getattr(model, "decoder", None)
+    if not isinstance(decoder, torch.nn.Conv2d):
+        raise TypeError(
+            f"--zero-init-decoder needs model.decoder to be an nn.Conv2d, got "
+            f"{type(decoder).__name__} on {type(model).__name__}"
+        )
+    with torch.no_grad():
+        decoder.weight.zero_()
+        if decoder.bias is not None:
+            decoder.bias.zero_()
+    logger.info("zero-init-decoder applied: decoder weight and bias set to 0")
+
+
 def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("config")
@@ -135,6 +156,19 @@ def main() -> None:
         "memorized batches): the loss then measures skill over persistence, "
         "equivalent to normalizing targets by the spread of the change.",
     )
+    p.add_argument(
+        "--dynamic-limit",
+        type=parse_limit,
+        default=20.0,
+        help="Max/min channel-weight ratio for --loss dynamic: a float >= 1 or "
+        "'none' for no limit (default 20).",
+    )
+    p.add_argument(
+        "--zero-init-decoder",
+        action="store_true",
+        help="Zero the final output conv (weights and bias) so the initial "
+        "model output equals the residual base exactly.",
+    )
     p.add_argument("--fp32", action="store_true")
     p.add_argument(
         "--max-hours",
@@ -150,6 +184,8 @@ def main() -> None:
         raise ValueError(f"--eval-every must be >= 1, got {args.eval_every}")
     if args.steps < 1:
         raise ValueError(f"--steps must be >= 1, got {args.steps}")
+    if args.dynamic_limit != 20.0 and args.loss != "dynamic":
+        raise ValueError("--dynamic-limit requires --loss dynamic")
 
     torch.set_num_threads(args.threads)
     out_dir = Path(args.out)
@@ -164,7 +200,9 @@ def main() -> None:
     if args.loss == "mse":
         cfg.loss = "mse"
     elif args.loss == "dynamic":
-        cfg.loss = DynamicLossConfig(type="dynamic", metric="mse", limit=20)
+        cfg.loss = DynamicLossConfig(
+            type="dynamic", metric="mse", limit=args.dynamic_limit
+        )
     if args.fp32:
         cfg.model.use_bfloat16 = False
     if cfg.scheduler is not None:
@@ -183,6 +221,8 @@ def main() -> None:
     logging.getLogger("overfit").setLevel(logging.INFO)
 
     trainer = Trainer(cfg)
+    if args.zero_init_decoder:
+        zero_init_decoder(trainer.model)
     trainer.init_data_loaders(cfg.steps[0])
     model, loss_fn, opt = trainer.model, trainer.loss_fn, trainer.optimizer
     n_prog = trainer.N_prog
