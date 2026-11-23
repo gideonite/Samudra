@@ -1,0 +1,81 @@
+# SPDX-FileCopyrightText: 2026 Samudra Authors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+# Overfit experiment, recipe "I": the paper Samudra architecture
+# (samudra_om4/model.yaml) with pred_residuals on, the dynamic (per-channel
+# reweighted) MSE loss with no weight-ratio limit, and learning_rate 1e-4,
+# trained repeatedly on one 1° OM4 sample on CPU. overfit.py also zero-inits the
+# decoder. Run via experiments/overfit/overfit.py (see its docstring).
+# Data: a 40-step local clone of the public v2026-09 om4_onedeg store, made with
+#   scripts/clone_data.py --time_start 1241 --time_end 1281 .data_cache/om4_onedeg_40/
+debug: false
+disk_mode: true
+epochs: 1
+batch_size: 1
+learning_rate: 0.0001
+scheduler: null
+loss:
+  type: dynamic
+  metric: mse
+  limit: null
+# Checkpoint selection is unused here; the default (validation_loss) is rejected
+# for dynamic losses.
+validation_score: one_step_rmse
+finetune: false
+resume_ckpt_path: null
+data_stride: [1]
+steps: [1]
+step_transition: []
+preemptible: false
+backend: cpu
+experiment:
+  name: overfit
+  rand_seed: 15
+  base_output_dir: .LOCAL
+  data_root: .data_cache/om4_onedeg_40/
+  wandb:
+    mode: disabled
+    project: default
+data:
+  sources:
+    - type: om4
+      prognostic_vars_key: thermo_dynamic_all
+      # Not tau_hfds_hfds_anom: hfds_anomalies is a day-of-year climatology
+      # anomaly, and with 40 steps each day-of-year occurs once, so it is
+      # identically 0 (an all-zero input channel).
+      boundary_vars_key: tau_hfds
+      train_time:
+        start: "1975-01-03"
+        end: "1975-04-30"
+      val_time:
+        start: "1975-05-20"
+        end: "1975-07-10"
+      inference_time:
+        start: "1975-05-20"
+        end: "1975-07-10"
+      data_location: OM4.zarr
+      data_means_location: OM4_means.zarr
+      data_stds_location: OM4_stds.zarr
+  loading:
+    type: cpu
+    num_workers: 0
+model:
+  checkpointing: all
+  pred_residuals: true
+  last_kernel_size: 3
+  pad: "circular"
+  use_bfloat16: true
+  gradient_detach_interval: 0
+  unet:
+    ch_width: [280, 380, 480, 520]
+    dilation: [1, 2, 4, 8]
+    n_layers: [1, 1, 1, 1]
+    core_block:
+      block_type: "conv_next_block"
+      kernel_size: 3
+      activation: "capped_gelu"
+      upscale_factor: 2
+      norm: "instance"
+    down_sampling_block: "avg_pool"
+    up_sampling_block: "zonally_periodic_upsample"
